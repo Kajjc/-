@@ -1,0 +1,32 @@
+# Normalize line endings for cross-platform team (Windows contributors expected, but keep it safe)
+* text=auto eol=lf
+
+# Unity YAML assets — force text serialization must be enabled in Editor (Project Settings > Editor)
+# so these actually diff as text instead of binary blobs.
+*.cs text diff=csharp
+*.shader text
+*.cginc text
+*.hlsl text
+
+# Unity treats these as text (YAML) when Force Text serialization is on
+*.unity text merge=unityyamlmerge eol=lf
+*.prefab text merge=unityyamlmerge eol=lf
+*.asset text merge=unityyamlmerge eol=lf
+*.meta text merge=unityyamlmerge eol=lf
+*.controller text merge=unityyamlmerge eol=lf
+*.mat text merge=unityyamlmerge eol=lf
+*.physicsMaterial2D text merge=unityyamlmerge eol=lf
+*.anim text merge=unityyamlmerge eol=lf
+
+# Binary assets -> Git LFS (add more extensions here as the team starts using them)
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.ogg filter=lfs diff=lfs merge=lfs -text
+*.fbx filter=lfs diff=lfs merge=lfs -text
+*.ttf filter=lfs diff=lfs merge=lfs -text
+*.pdf filter=lfs diff=lfs merge=lfs -text
+*.pptx filter=lfs diff=lfs merge=lfs -text
