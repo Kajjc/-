@@ -89,6 +89,15 @@ namespace Arena.UI
             BuildChipRow("Сфера", DistinctInOrder(library.Select(s => s.meta.sphere)), y, sphereChips, v =>
             {
                 selectedSphere = v;
+                // Тон принадлежит конкретной теме, а не сфере в целом (например,
+                // "уклончивый" есть только у сюжета HR "Контроль договорённостей") —
+                // при смене сферы подсветка тона иначе осталась бы на значении,
+                // которого для новой сферы вообще не существует.
+                if (!library.Any(s => s.meta.sphere == selectedSphere && s.meta.tone == selectedTone))
+                {
+                    var firstToneForSphere = library.FirstOrDefault(s => s.meta.sphere == selectedSphere)?.meta.tone;
+                    if (firstToneForSphere != null) selectedTone = firstToneForSphere;
+                }
                 UpdatePreview();
             });
             y -= FieldStep;
