@@ -27,9 +27,11 @@ namespace Arena.UI
 
         // Вторичный текст (подписи, описания) — достаточно непрозрачный, чтобы
         // реально читаться на тёмном фоне, но темнее основного белого текста.
-        public static readonly Color Muted = new Color(Parchment.r, Parchment.g, Parchment.b, 0.85f);
-        // Мелкие служебные CAPS-подписи (заголовки полей) — минимально приглушены.
-        public static readonly Color EyebrowMuted = new Color(Parchment.r, Parchment.g, Parchment.b, 0.68f);
+        public static readonly Color Muted = new Color(Parchment.r, Parchment.g, Parchment.b, 0.94f);
+        // Мелкие служебные CAPS-подписи (короткие заголовки полей типа "СФЕРА") —
+        // минимально приглушены. Не использовать для длинного текста (абзацев,
+        // цитат) — на таком объёме текста заметно теряет контраст.
+        public static readonly Color EyebrowMuted = new Color(Parchment.r, Parchment.g, Parchment.b, 0.8f);
 
         private static Font cachedFont;
 
@@ -200,6 +202,101 @@ namespace Arena.UI
                 image.sprite = null;
                 image.color = Navy;
             }
+        }
+
+        private const float ScrollbarWidth = 10f;
+        private const float ScrollbarGap = 6f;
+
+        // Вертикальный прокручиваемый список (экран "Теория и техники", экран итога):
+        // возвращает корневой RectTransform (для позиционирования на экране) и через
+        // out — Content, куда добавлять элементы списка сверху вниз. Скроллбар справа
+        // виден постоянно — чтобы было очевидно, что ниже есть ещё содержимое.
+        public static RectTransform CreateScrollList(Transform parent, string name, out RectTransform content)
+        {
+            var scrollGo = new GameObject(name, typeof(RectTransform));
+            scrollGo.transform.SetParent(parent, false);
+            var scrollRoot = (RectTransform)scrollGo.transform;
+            var scrollRect = scrollGo.AddComponent<ScrollRect>();
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.scrollSensitivity = 24f;
+            scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
+            scrollRect.verticalScrollbarSpacing = ScrollbarGap;
+
+            var viewportGo = new GameObject("Viewport", typeof(RectTransform));
+            viewportGo.transform.SetParent(scrollGo.transform, false);
+            var viewportRect = (RectTransform)viewportGo.transform;
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.offsetMin = Vector2.zero;
+            viewportRect.offsetMax = new Vector2(-(ScrollbarWidth + ScrollbarGap), 0f);
+            var viewportImage = viewportGo.AddComponent<Image>();
+            viewportImage.color = new Color(0f, 0f, 0f, 0.001f);
+            viewportGo.AddComponent<RectMask2D>();
+
+            var contentGo = new GameObject("Content", typeof(RectTransform));
+            contentGo.transform.SetParent(viewportGo.transform, false);
+            content = (RectTransform)contentGo.transform;
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            // Без явного sizeDelta=0 RectTransform наследует дефолтные 100x100 от
+            // создания — при растянутых по X анкорах это делает Content на 100px
+            // шире вьюпорта и обрезает текст по обеим сторонам под RectMask2D.
+            content.sizeDelta = Vector2.zero;
+
+            var contentLayout = contentGo.AddComponent<VerticalLayoutGroup>();
+            contentLayout.spacing = 12;
+            contentLayout.childForceExpandHeight = false;
+            contentLayout.childForceExpandWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childControlWidth = true;
+            var fitter = contentGo.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scrollRect.viewport = viewportRect;
+            scrollRect.content = content;
+            scrollRect.verticalScrollbar = CreateVerticalScrollbar(scrollGo.transform);
+
+            return scrollRoot;
+        }
+
+        private static Scrollbar CreateVerticalScrollbar(Transform parent)
+        {
+            var barGo = new GameObject("Scrollbar", typeof(RectTransform));
+            barGo.transform.SetParent(parent, false);
+            var barRect = (RectTransform)barGo.transform;
+            barRect.anchorMin = new Vector2(1f, 0f);
+            barRect.anchorMax = new Vector2(1f, 1f);
+            barRect.pivot = new Vector2(1f, 1f);
+            barRect.sizeDelta = new Vector2(ScrollbarWidth, 0f);
+            barRect.anchoredPosition = Vector2.zero;
+
+            var track = barGo.AddComponent<Image>();
+            track.color = new Color(Parchment.r, Parchment.g, Parchment.b, 0.08f);
+
+            var scrollbar = barGo.AddComponent<Scrollbar>();
+            scrollbar.direction = Scrollbar.Direction.BottomToTop;
+
+            var slidingAreaGo = new GameObject("SlidingArea", typeof(RectTransform));
+            slidingAreaGo.transform.SetParent(barGo.transform, false);
+            StretchFull((RectTransform)slidingAreaGo.transform);
+
+            var handleGo = new GameObject("Handle", typeof(RectTransform));
+            handleGo.transform.SetParent(slidingAreaGo.transform, false);
+            var handleRect = (RectTransform)handleGo.transform;
+            handleRect.anchorMin = Vector2.zero;
+            handleRect.anchorMax = new Vector2(1f, 0.2f);
+            handleRect.sizeDelta = Vector2.zero;
+            var handleImage = handleGo.AddComponent<Image>();
+            handleImage.color = new Color(Amber.r, Amber.g, Amber.b, 0.65f);
+
+            scrollbar.handleRect = handleRect;
+            scrollbar.targetGraphic = handleImage;
+
+            return scrollbar;
         }
 
         public static void SetChipSelected(Image background, Text text, bool selected)

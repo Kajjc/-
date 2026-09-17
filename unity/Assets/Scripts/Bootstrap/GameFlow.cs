@@ -19,6 +19,7 @@ namespace Arena.Bootstrap
         private SkillTestController skillTest;
         private AdminConfigController adminConfig;
         private DialogueUIController dialogue;
+        private TheoryController theory;
 
         public void Begin()
         {
@@ -33,6 +34,9 @@ namespace Arena.Bootstrap
             skillTest = gameObject.AddComponent<SkillTestController>();
             adminConfig = gameObject.AddComponent<AdminConfigController>();
             dialogue = gameObject.AddComponent<DialogueUIController>();
+            theory = gameObject.AddComponent<TheoryController>();
+
+            dialogue.OnOpenTheory = encounteredIds => theory.Show(encounteredIds, () => dialogue.Root.SetActive(true));
 
             modeSelect.Show(OnTrainingSelected, OnAdminSelected);
         }

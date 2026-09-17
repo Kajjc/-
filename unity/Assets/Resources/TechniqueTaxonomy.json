@@ -1,5 +1,5 @@
 {
-  "_comment": "Закрытая таксономия переговорных техник для тегирования опций диалога (поле technique в DialogueOption). Методология и обоснование — docs/eval-rubric.md. Список закрыт: scenario-designer не должен использовать значения technique, отсутствующие здесь. ЗЕРКАЛО для рантайма (экран 'Теория и техники') — unity/Assets/Resources/TechniqueTaxonomy.json — при правке синхронизировать оба файла.",
+  "_comment": "Зеркало docs/technique-taxonomy.json для рантайма (экран 'Теория и техники', unity/Assets/Scripts/UI/TheoryController.cs). Источник истины по-прежнему docs/technique-taxonomy.json — при правке методологии обновляйте ОБА файла. Методология и обоснование — docs/eval-rubric.md. Список закрыт: scenario-designer не должен использовать значения technique, отсутствующие здесь.",
   "_domainCentralityValues": ["central", "secondary", "n/a"],
   "techniques": [
     {

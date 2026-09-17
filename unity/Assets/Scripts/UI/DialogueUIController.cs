@@ -1,5 +1,6 @@
 using System;
-using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 using Arena.Dialogue;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,6 +14,10 @@ namespace Arena.UI
         private DialogueEngine engine;
         private Action onRequestNewScenario;
 
+        // Гипотеза Г5 (docs/feature-hypotheses.md) — экран итога передаёт сюда теги
+        // техник, реально встретившихся в прохождении; связывает GameFlow.
+        public Action<IEnumerable<string>> OnOpenTheory;
+
         private RectTransform root;
         private RectTransform portrait;
         private Image portraitImage;
@@ -25,8 +30,12 @@ namespace Arena.UI
         private RectTransform outcomeBadge;
         private Text endTitleText;
         private Text endSummaryText;
-        private RectTransform scoreRow;
-        private RectTransform tipsColumn;
+        private RectTransform endContent;
+
+        // Гипотеза Ю3 (docs/feature-hypotheses.md): реплики продублированы цифрами
+        // и доступны с клавиатуры — быстрее и увереннее на питч-сессии, чем клики
+        // мышью. Список в том же порядке, что и кнопки на экране.
+        private readonly List<DialogueOption> currentOptions = new List<DialogueOption>();
 
         public GameObject Root => root != null ? root.gameObject : null;
 
@@ -131,75 +140,66 @@ namespace Arena.UI
 
             endSummaryText = Theme.CreateText(endPanel, "EndSummary", 18, TextAnchor.UpperLeft, Theme.Muted);
             var summaryRect = endSummaryText.rectTransform;
-            summaryRect.anchorMin = new Vector2(0.06f, 0.72f);
+            summaryRect.anchorMin = new Vector2(0.06f, 0.74f);
             summaryRect.anchorMax = new Vector2(0.94f, 0.83f);
             summaryRect.offsetMin = Vector2.zero;
             summaryRect.offsetMax = Vector2.zero;
 
-            var scoreLabel = Theme.CreateText(endPanel, "ScoreLabel", 13, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
-            scoreLabel.text = "БАЛЛЫ ПО ТЕХНИКАМ";
-            var scoreLabelRect = scoreLabel.rectTransform;
-            scoreLabelRect.anchorMin = new Vector2(0.06f, 0.65f);
-            scoreLabelRect.anchorMax = new Vector2(0.6f, 0.7f);
-            scoreLabelRect.offsetMin = Vector2.zero;
-            scoreLabelRect.offsetMax = Vector2.zero;
-
-            var scoreRowGo = new GameObject("ScoreRow", typeof(RectTransform));
-            scoreRowGo.transform.SetParent(endPanel, false);
-            scoreRow = (RectTransform)scoreRowGo.transform;
-            scoreRow.anchorMin = new Vector2(0.06f, 0.56f);
-            scoreRow.anchorMax = new Vector2(0.94f, 0.64f);
-            scoreRow.offsetMin = Vector2.zero;
-            scoreRow.offsetMax = Vector2.zero;
-            var scoreLayout = scoreRowGo.AddComponent<HorizontalLayoutGroup>();
-            scoreLayout.spacing = 10;
-            scoreLayout.childAlignment = TextAnchor.MiddleLeft;
-            scoreLayout.childForceExpandWidth = false;
-            scoreLayout.childForceExpandHeight = true;
-
-            var tipsLabel = Theme.CreateText(endPanel, "TipsLabel", 13, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
-            tipsLabel.text = "НАД ЧЕМ ПОРАБОТАТЬ";
-            var tipsLabelRect = tipsLabel.rectTransform;
-            tipsLabelRect.anchorMin = new Vector2(0.06f, 0.49f);
-            tipsLabelRect.anchorMax = new Vector2(0.6f, 0.54f);
-            tipsLabelRect.offsetMin = Vector2.zero;
-            tipsLabelRect.offsetMax = Vector2.zero;
-
-            var tipsGo = new GameObject("Tips", typeof(RectTransform));
-            tipsGo.transform.SetParent(endPanel, false);
-            tipsColumn = (RectTransform)tipsGo.transform;
-            tipsColumn.anchorMin = new Vector2(0.06f, 0.2f);
-            tipsColumn.anchorMax = new Vector2(0.94f, 0.48f);
-            tipsColumn.offsetMin = Vector2.zero;
-            tipsColumn.offsetMax = Vector2.zero;
-            var tipsLayout = tipsGo.AddComponent<VerticalLayoutGroup>();
-            tipsLayout.spacing = 8;
-            tipsLayout.childForceExpandWidth = true;
-            tipsLayout.childForceExpandHeight = false;
-            tipsLayout.childControlWidth = true;
-            tipsLayout.childControlHeight = true;
+            // Единый прокручиваемый блок (баллы -> сильные стороны -> над чем
+            // поработать) вместо жёстких процентных зон — гипотеза Ю2
+            // (docs/feature-hypotheses.md), методология — docs/eval-rubric.md §3.2.
+            var scrollRoot = Theme.CreateScrollList(endPanel, "EndScroll", out endContent);
+            scrollRoot.anchorMin = new Vector2(0.06f, 0.16f);
+            scrollRoot.anchorMax = new Vector2(0.94f, 0.72f);
+            scrollRoot.offsetMin = Vector2.zero;
+            scrollRoot.offsetMax = Vector2.zero;
 
             var restartButton = Theme.CreateButton(endPanel, "Пройти ещё раз", new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.08f), Theme.Parchment, RestartScenario);
             restartButton.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleCenter;
             var restartRect = (RectTransform)restartButton.transform;
             restartRect.anchorMin = new Vector2(0.06f, 0.05f);
-            restartRect.anchorMax = new Vector2(0.48f, 0.14f);
+            restartRect.anchorMax = new Vector2(0.32f, 0.14f);
             restartRect.offsetMin = Vector2.zero;
             restartRect.offsetMax = Vector2.zero;
+
+            var theoryButton = Theme.CreateButton(endPanel, "Теория и техники", new Color(Theme.Teal.r, Theme.Teal.g, Theme.Teal.b, 0.18f), Theme.Parchment, OnOpenTheoryClicked);
+            theoryButton.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleCenter;
+            var theoryRect = (RectTransform)theoryButton.transform;
+            theoryRect.anchorMin = new Vector2(0.35f, 0.05f);
+            theoryRect.anchorMax = new Vector2(0.61f, 0.14f);
+            theoryRect.offsetMin = Vector2.zero;
+            theoryRect.offsetMax = Vector2.zero;
 
             var newScenarioButton = Theme.CreateButton(endPanel, "Другой сценарий", Theme.Amber, Theme.Navy, OnRequestNewScenario);
             newScenarioButton.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleCenter;
             var newScenarioRect = (RectTransform)newScenarioButton.transform;
-            newScenarioRect.anchorMin = new Vector2(0.52f, 0.05f);
+            newScenarioRect.anchorMin = new Vector2(0.64f, 0.05f);
             newScenarioRect.anchorMax = new Vector2(0.94f, 0.14f);
             newScenarioRect.offsetMin = Vector2.zero;
             newScenarioRect.offsetMax = Vector2.zero;
+        }
+
+        private void Update()
+        {
+            if (root == null || !root.gameObject.activeInHierarchy) return;
+            if (endPanel.gameObject.activeSelf || currentOptions.Count == 0) return;
+
+            for (int i = 0; i < currentOptions.Count && i < 9; i++)
+            {
+                if (!Input.GetKeyDown(KeyCode.Alpha1 + i) && !Input.GetKeyDown(KeyCode.Keypad1 + i))
+                    continue;
+                var option = currentOptions[i];
+                if (engine.IsOptionAvailable(option))
+                    OnOptionChosen(option);
+                return;
+            }
         }
 
         private void Render()
         {
             foreach (Transform child in optionsContainer)
                 Destroy(child.gameObject);
+            currentOptions.Clear();
 
             if (engine.IsTerminal)
             {
@@ -213,20 +213,100 @@ namespace Arena.UI
             opponentText.text = engine.CurrentNode.opponentLine;
             RenderPips();
 
+            // Гипотеза Ю1 (docs/feature-hypotheses.md): одна короткая строка перед
+            // первым выбором, чтобы серые/заблокированные реплики не читались как
+            // баг — исчезает сама после первого хода, лишнего экрана не создаёт.
+            if (engine.Transcript.Count == 0)
+            {
+                var hint = Theme.CreateText(optionsContainer, "Hint", 14, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
+                hint.text = "Серые реплики пока недоступны — рядом с ними указано, какого навыка не хватает.";
+                hint.gameObject.AddComponent<LayoutElement>().minHeight = 22;
+            }
+
             foreach (var option in engine.CurrentNode.options)
             {
+                currentOptions.Add(option);
+                int number = currentOptions.Count;
                 bool available = engine.IsOptionAvailable(option);
-                var label = available ? option.text : $"{option.text}   {engine.GetLockLabel(option)}";
-                var fill = available
-                    ? new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.06f)
-                    : new Color(Theme.Coral.r, Theme.Coral.g, Theme.Coral.b, 0.08f);
-                var textColor = available ? Theme.Parchment : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.62f);
                 var capturedOption = option;
-                var button = Theme.CreateButton(optionsContainer, label, fill, textColor, () => OnOptionChosen(capturedOption));
-                button.interactable = available;
-                var layoutElement = button.gameObject.AddComponent<LayoutElement>();
-                layoutElement.minHeight = 52;
+                CreateOptionButton(number, option, available, () => OnOptionChosen(capturedOption));
             }
+        }
+
+        // Гипотеза Ю5 (docs/feature-hypotheses.md): вместо текста "Требуется: Логика ≥2"
+        // — цветная иконка навыка (или, пока реальных ассетов нет, цветной квадрат того
+        // же акцента, что и пипсы навыков) + "≥N". Считывается быстрее, чем текст целиком.
+        private void CreateOptionButton(int number, DialogueOption option, bool available, UnityEngine.Events.UnityAction onClick)
+        {
+            var fill = available
+                ? new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.06f)
+                : new Color(Theme.Coral.r, Theme.Coral.g, Theme.Coral.b, 0.08f);
+
+            var go = new GameObject($"Option_{number}", typeof(RectTransform));
+            go.transform.SetParent(optionsContainer, false);
+            var image = go.AddComponent<Image>();
+            image.color = fill;
+            var button = go.AddComponent<Button>();
+            button.targetGraphic = image;
+            button.interactable = available;
+            if (onClick != null) button.onClick.AddListener(onClick);
+            go.AddComponent<LayoutElement>().minHeight = 52;
+
+            var rowLayout = go.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.padding = new RectOffset(18, 18, 6, 6);
+            rowLayout.spacing = 10;
+            rowLayout.childAlignment = TextAnchor.MiddleLeft;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = true;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+
+            var textColor = available ? Theme.Parchment : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.62f);
+            var label = Theme.CreateText(go.transform, "Label", 20, TextAnchor.MiddleLeft, textColor);
+            label.text = $"{number}.  {option.text}";
+            label.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
+
+            if (!available)
+                foreach (var req in engine.GetMissingRequirements(option))
+                    AddSkillRequirementBadge(go.transform, req);
+        }
+
+        private void AddSkillRequirementBadge(Transform parent, SkillRequirement requirement)
+        {
+            var badgeGo = new GameObject($"Req_{requirement.skill}", typeof(RectTransform));
+            badgeGo.transform.SetParent(parent, false);
+            var badgeLayout = badgeGo.AddComponent<HorizontalLayoutGroup>();
+            badgeLayout.spacing = 4;
+            badgeLayout.childAlignment = TextAnchor.MiddleLeft;
+            badgeLayout.childForceExpandWidth = false;
+            badgeLayout.childForceExpandHeight = true;
+            badgeLayout.childControlWidth = true;
+            badgeLayout.childControlHeight = true;
+            badgeGo.AddComponent<LayoutElement>().minWidth = 54;
+
+            var accent = Theme.ForSkill(requirement.skill);
+
+            var iconGo = new GameObject("Icon", typeof(RectTransform));
+            iconGo.transform.SetParent(badgeGo.transform, false);
+            var iconLayout = iconGo.AddComponent<LayoutElement>();
+            iconLayout.minWidth = 14;
+            iconLayout.minHeight = 14;
+            var iconImage = iconGo.AddComponent<Image>();
+            var sprite = Theme.TryLoadSprite($"Icons/skill_{requirement.skill}");
+            if (sprite != null)
+            {
+                iconImage.sprite = sprite;
+                iconImage.color = Color.white;
+            }
+            else
+            {
+                // Реальной иконки ещё нет (docs/team-plan.md) — цветной квадрат того
+                // же акцента, что и пипсы навыков, как временная замена.
+                iconImage.color = accent;
+            }
+
+            var levelText = Theme.CreateText(badgeGo.transform, "Level", 13, TextAnchor.MiddleLeft, accent);
+            levelText.text = $"≥{requirement.level}";
         }
 
         // Ищет Resources/Portraits/<id>.png и Resources/Backgrounds/<id>.png по id
@@ -235,8 +315,11 @@ namespace Arena.UI
         // текущая плашка-заглушка, ничего не ломается.
         private void UpdatePortraitAndBackground()
         {
-            var id = engine.Scenario.meta.id;
-            var portraitSprite = Theme.TryLoadSprite($"Portraits/{id}");
+            // По домену (сфере), а не по конкретному сценарию: с Г2 на каждый домен
+            // приходится 3 сценария (лёгкий/средний/сложный) с одним и тем же
+            // персонажем/обстановкой — незачем просить команду рисовать 3x ассетов.
+            var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere) ?? engine.Scenario.meta.id;
+            var portraitSprite = Theme.TryLoadSprite($"Portraits/{domainKey}");
             if (portraitSprite != null)
             {
                 portraitImage.sprite = portraitSprite;
@@ -250,7 +333,7 @@ namespace Arena.UI
                 portraitTint.SetActive(true);
             }
 
-            Theme.SetCanvasBackground(root, $"Backgrounds/{id}");
+            Theme.SetCanvasBackground(root, $"Backgrounds/{domainKey}");
         }
 
         private void RenderPips()
@@ -305,36 +388,214 @@ namespace Arena.UI
             endTitleText.text = OutcomeTitle(node.outcome);
             endSummaryText.text = node.summary;
 
-            foreach (Transform child in scoreRow) Destroy(child.gameObject);
+            foreach (Transform child in endContent) Destroy(child.gameObject);
+
+            var taxonomy = TechniqueTaxonomyLibrary.Load();
+            var byId = new Dictionary<string, TechniqueInfo>();
+            foreach (var t in taxonomy.techniques) byId[t.id] = t;
+            var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere);
+
+            AddSectionLabel("БАЛЛЫ ПО ТЕХНИКАМ");
+            AddScoreChipsRow();
+
+            AddSectionLabel("ОБЩАЯ СТРАТЕГИЯ");
+            AddPlainLine(BuildStrategyNarrative(byId), Theme.Parchment);
+
+            AddSectionLabel("СИЛЬНЫЕ СТОРОНЫ");
+            var strengths = SelectHighlights(wantStrengths: true, domainKey, byId);
+            if (strengths.Count == 0)
+                AddPlainLine("Сильных сторон пока не зафиксировано — начните с раздела ниже.", Theme.Muted);
+            else
+                foreach (var step in strengths) AddQuoteCard(step, byId, isStrength: true);
+
+            AddSectionLabel("НАД ЧЕМ ПОРАБОТАТЬ");
+            var improvements = SelectHighlights(wantStrengths: false, domainKey, byId);
+            if (improvements.Count == 0)
+                AddPlainLine("Явных слабых реплик не было.", Theme.Sage);
+            else
+                foreach (var step in improvements) AddQuoteCard(step, byId, isStrength: false);
+        }
+
+        // Деление таксономии на две семьи техник (docs/technique-taxonomy.json) —
+        // ровно техники с диапазоном только "+" и только "-", без пересечений и
+        // без нейтральных: соответствует делению Fisher & Ury на принципиальные
+        // переговоры vs позиционный торг. Используется в BuildStrategyNarrative (Ю6).
+        private static readonly HashSet<string> PrincipledTechniqueIds = new HashSet<string>
+        {
+            "state_interest", "objective_criteria", "open_question", "active_listening",
+            "de_escalate", "package_deal", "batna_leverage", "anchor_with_flex", "recover"
+        };
+
+        private static readonly HashSet<string> PositionalTechniqueIds = new HashSet<string>
+        {
+            "position_push", "escalate", "personal_attack", "empty_threat", "vague_claim", "give_up"
+        };
+
+        // Гипотеза Ю6 (docs/feature-hypotheses.md): не только теги+баллы, а один
+        // абзац о стратегии в целом — детерминированный шаблон по доле принципиальных
+        // vs позиционных техник за весь прогон (без LLM), усиливает уже сделанный Ю2.
+        private string BuildStrategyNarrative(Dictionary<string, TechniqueInfo> byId)
+        {
+            int principledSum = 0, positionalSum = 0;
+            string topPrincipledId = null;
+            int topPrincipledScore = int.MinValue;
+            string topPositionalId = null;
+            int topPositionalScore = int.MaxValue;
+
+            foreach (var kv in engine.TechniqueScores)
+            {
+                if (PrincipledTechniqueIds.Contains(kv.Key))
+                {
+                    principledSum += kv.Value;
+                    if (kv.Value > topPrincipledScore) { topPrincipledScore = kv.Value; topPrincipledId = kv.Key; }
+                }
+                else if (PositionalTechniqueIds.Contains(kv.Key))
+                {
+                    positionalSum += kv.Value;
+                    if (kv.Value < topPositionalScore) { topPositionalScore = kv.Value; topPositionalId = kv.Key; }
+                }
+            }
+
+            int total = principledSum + Mathf.Abs(positionalSum);
+            if (total == 0)
+                return "За это прохождение накопилось слишком мало данных для общего разбора стратегии — пройдите сценарий ещё раз.";
+
+            string PrincipledName() => byId.TryGetValue(topPrincipledId, out var info) ? info.ru_name : topPrincipledId;
+            string PositionalName() => byId.TryGetValue(topPositionalId, out var info) ? info.ru_name : topPositionalId;
+            float principledShare = principledSum / (float)total;
+
+            if (principledShare >= 0.75f)
+                return $"В целом вы вели принципиальные переговоры (Fisher & Ury): опирались на интересы и объективные критерии, а не на давление. Сильнее всего сработала техника «{PrincipledName()}» — держите этот подход и в следующих раундах.";
+
+            if (principledShare <= 0.25f)
+                return $"В этом прохождении преобладал позиционный торг — чаще всего проявлялась «{PositionalName()}». По Гарвардскому методу такой подход обычно вредит отношениям и не даёт лучшего результата: попробуйте в следующий раз чаще опираться на объективные критерии и открытые вопросы.";
+
+            return $"Стратегия получилась смешанной: сильная сторона — «{PrincipledName()}», но эпизодами проявлялся позиционный паттерн «{PositionalName()}». Если убрать эти срывы, результат станет заметно увереннее.";
+        }
+
+        // Гипотеза Ю2 (docs/feature-hypotheses.md), методология docs/eval-rubric.md §3.2:
+        // strengths — points>0, сортировка по убыванию points, при равенстве сначала
+        // центральные для домена техники; improvements — points<=0 с непустым
+        // betterAlternative, по возрастанию points. В обоих случаях — дедупликация
+        // по тегу техники (один самый яркий пример) и лимит 3.
+        private List<ChosenStep> SelectHighlights(bool wantStrengths, string domainKey, Dictionary<string, TechniqueInfo> byId)
+        {
+            IEnumerable<ChosenStep> filtered = wantStrengths
+                ? engine.Transcript.Where(s => s.ChosenOption.points > 0)
+                : engine.Transcript.Where(s => s.ChosenOption.points <= 0 && !string.IsNullOrEmpty(s.ChosenOption.betterAlternative));
+
+            var ordered = wantStrengths
+                ? filtered.OrderByDescending(s => s.ChosenOption.points)
+                    .ThenByDescending(s => IsCentral(s.ChosenOption.technique, domainKey, byId))
+                : filtered.OrderBy(s => s.ChosenOption.points);
+
+            var result = new List<ChosenStep>();
+            var seenTags = new HashSet<string>();
+            foreach (var step in ordered)
+            {
+                if (!seenTags.Add(step.ChosenOption.technique)) continue;
+                result.Add(step);
+                if (result.Count >= 3) break;
+            }
+            return result;
+        }
+
+        private static bool IsCentral(string techniqueId, string domainKey, Dictionary<string, TechniqueInfo> byId)
+        {
+            if (domainKey == null || !byId.TryGetValue(techniqueId, out var info) || info.domain_centrality == null)
+                return false;
+            string value;
+            switch (domainKey)
+            {
+                case "hr": value = info.domain_centrality.hr; break;
+                case "sales": value = info.domain_centrality.sales; break;
+                case "procurement": value = info.domain_centrality.procurement; break;
+                default: value = null; break;
+            }
+            return value == "central";
+        }
+
+        private static string DomainKeyForSphere(string sphere)
+        {
+            switch (sphere)
+            {
+                case "HR": return "hr";
+                case "B2B-продажи": return "sales";
+                case "Закупки": return "procurement";
+                default: return null;
+            }
+        }
+
+        private void AddSectionLabel(string text)
+        {
+            var label = Theme.CreateText(endContent, "SectionLabel", 13, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
+            label.text = text;
+            label.gameObject.AddComponent<LayoutElement>().minHeight = 20;
+        }
+
+        private void AddPlainLine(string text, Color color)
+        {
+            Theme.CreateText(endContent, "Line", 15, TextAnchor.UpperLeft, color).text = text;
+        }
+
+        // Сетка вместо строки: после углубления сценариев (docs/feature-hypotheses.md,
+        // задача "углубить разговоры") за один проход может накопиться до 8-10 разных
+        // тегов техник — нерастягивающийся HorizontalLayoutGroup вылезал бы за экран,
+        // GridLayoutGroup сам переносит лишние чипы на следующую строку.
+        private void AddScoreChipsRow()
+        {
+            var rowGo = new GameObject("ScoreRow", typeof(RectTransform));
+            rowGo.transform.SetParent(endContent, false);
+            var grid = rowGo.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(150, 30);
+            grid.spacing = new Vector2(8, 8);
+            grid.childAlignment = TextAnchor.MiddleLeft;
+            grid.constraint = GridLayoutGroup.Constraint.Flexible;
+            rowGo.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
             foreach (var kv in engine.TechniqueScores)
             {
                 bool positive = kv.Value > 0;
                 var accent = positive ? Theme.Sage : Theme.Coral;
-                var chipBg = Theme.CreatePanel(scoreRow, "Chip", new Color(accent.r, accent.g, accent.b, 0.16f));
-                chipBg.gameObject.AddComponent<LayoutElement>().minWidth = 140;
+                var chipBg = Theme.CreatePanel(rowGo.transform, "Chip", new Color(accent.r, accent.g, accent.b, 0.16f));
                 var chipText = Theme.CreateText(chipBg, "Label", 14, TextAnchor.MiddleCenter, accent);
                 chipText.text = $"{kv.Key} {(positive ? "+" : "")}{kv.Value}";
                 Theme.StretchFull(chipText.rectTransform);
             }
+        }
 
-            foreach (Transform child in tipsColumn) Destroy(child.gameObject);
-            bool anyTip = false;
-            foreach (var step in engine.Transcript)
+        private void AddQuoteCard(ChosenStep step, Dictionary<string, TechniqueInfo> byId, bool isStrength)
+        {
+            var opt = step.ChosenOption;
+            byId.TryGetValue(opt.technique, out var info);
+            var accent = isStrength ? Theme.Sage : Theme.Coral;
+
+            var card = Theme.CreatePanel(endContent, isStrength ? "Strength" : "Improvement", new Color(accent.r, accent.g, accent.b, 0.08f));
+            var cardLayout = card.gameObject.AddComponent<VerticalLayoutGroup>();
+            cardLayout.padding = new RectOffset(16, 16, 10, 10);
+            cardLayout.spacing = 4;
+            cardLayout.childForceExpandWidth = true;
+            cardLayout.childForceExpandHeight = false;
+            cardLayout.childControlWidth = true;
+            cardLayout.childControlHeight = true;
+            card.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var tag = Theme.CreateText(card, "Tag", 12, TextAnchor.UpperLeft, accent);
+            tag.text = info != null ? info.ru_name.ToUpperInvariant() : opt.technique;
+
+            var quote = Theme.CreateText(card, "Quote", 15, TextAnchor.UpperLeft, Theme.Parchment);
+            quote.text = $"«{opt.text}»";
+
+            if (!isStrength && !string.IsNullOrEmpty(opt.betterAlternative))
             {
-                var opt = step.ChosenOption;
-                if (opt.points <= 0 && !string.IsNullOrEmpty(opt.betterAlternative))
-                {
-                    anyTip = true;
-                    var tip = Theme.CreateText(tipsColumn, "Tip", 15, TextAnchor.UpperLeft, new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.85f));
-                    tip.text = $"Вместо «{opt.text}» → «{opt.betterAlternative}»";
-                    var tipLayout = tip.gameObject.AddComponent<LayoutElement>();
-                    tipLayout.minHeight = 40;
-                }
+                var better = Theme.CreateText(card, "Better", 15, TextAnchor.UpperLeft, Theme.Muted);
+                better.text = $"Лучше: {opt.betterAlternative}";
             }
-            if (!anyTip)
+
+            if (info != null && !string.IsNullOrEmpty(info.theory_note_ru))
             {
-                var tip = Theme.CreateText(tipsColumn, "Tip", 15, TextAnchor.UpperLeft, Theme.Sage);
-                tip.text = "Явных слабых реплик не было.";
+                var theory = Theme.CreateText(card, "Theory", 13, TextAnchor.UpperLeft, Theme.EyebrowMuted);
+                theory.text = info.theory_note_ru;
             }
         }
 
@@ -358,6 +619,12 @@ namespace Arena.UI
         {
             Hide();
             onRequestNewScenario?.Invoke();
+        }
+
+        private void OnOpenTheoryClicked()
+        {
+            Hide();
+            OnOpenTheory?.Invoke(engine.TechniqueScores.Keys);
         }
     }
 }

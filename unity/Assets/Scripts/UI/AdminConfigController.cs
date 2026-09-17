@@ -14,7 +14,7 @@ namespace Arena.UI
     // добавляется прямой выбор уровня каждого навыка — без прохождения теста.
     public class AdminConfigController : MonoBehaviour
     {
-        private const int DifficultyMax = 5;
+        private const int DifficultyMax = 3;
         private const float FieldStep = 0.16f;
         private const float FieldTop = 0.8f;
 

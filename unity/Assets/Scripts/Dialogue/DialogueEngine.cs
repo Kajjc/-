@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Arena.Dialogue
 {
@@ -55,29 +54,12 @@ namespace Arena.Dialogue
             return true;
         }
 
-        // Человекочитаемая подпись недостающих требований, для показа заблокированной опции в UI.
-        public string GetLockLabel(DialogueOption option)
+        // Недостающие требования по опции — для UI, который рисует их иконкой навыка
+        // нужного цвета + "≥N" (гипотеза Ю5, docs/feature-hypotheses.md), а не текстом.
+        public IEnumerable<SkillRequirement> GetMissingRequirements(DialogueOption option)
         {
-            if (option.requiredSkills == null) return string.Empty;
-            var missing = option.requiredSkills.Where(r => skills.GetLevel(r.skill) < r.level);
-            var sb = new StringBuilder();
-            foreach (var r in missing)
-            {
-                if (sb.Length > 0) sb.Append(", ");
-                sb.Append(DisplayName(r.skill)).Append(" ≥ ").Append(r.level);
-            }
-            return sb.Length > 0 ? $"Требуется: {sb}" : string.Empty;
-        }
-
-        private static string DisplayName(string skill)
-        {
-            switch (skill)
-            {
-                case "napor": return "Напор";
-                case "empatiya": return "Эмпатия";
-                case "logika": return "Логика";
-                default: return skill;
-            }
+            if (option.requiredSkills == null) return Enumerable.Empty<SkillRequirement>();
+            return option.requiredSkills.Where(r => skills.GetLevel(r.skill) < r.level);
         }
 
         public void ChooseOption(DialogueOption option)
