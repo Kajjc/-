@@ -1,0 +1,156 @@
+{
+  "_comment": "Закрытая таксономия переговорных техник для тегирования опций диалога (поле technique в DialogueOption). Методология и обоснование — docs/eval-rubric.md. Список закрыт: scenario-designer не должен использовать значения technique, отсутствующие здесь.",
+  "_domainCentralityValues": ["central", "secondary", "n/a"],
+  "techniques": [
+    {
+      "id": "state_interest",
+      "ru_name": "Раскрытие интереса",
+      "definition_ru": "Игрок называет свой реальный интерес/потребность («зачем»), а не только позицию/требование.",
+      "points_range": [1, 2],
+      "domain_centrality": { "hr": "central", "sales": "secondary", "procurement": "secondary" },
+      "signal_ru": "В реплике явно есть слово-причина/обоснование интереса (например «хочу, чтобы...», «мне важно...»), а не только требование.",
+      "theory_note_ru": "Гарвардский метод (Fisher & Ury): фокус на интересах, а не на позициях, даёт больше пространства для решений.",
+      "theory_source": "Fisher & Ury, Getting to Yes"
+    },
+    {
+      "id": "position_push",
+      "ru_name": "Давление позицией",
+      "definition_ru": "Игрок повторяет/усиливает исходное требование, не объясняя интерес и не приводя критерий.",
+      "points_range": [-2, -1],
+      "domain_centrality": { "hr": "central", "sales": "secondary", "procurement": "secondary" },
+      "signal_ru": "Реплика — повтор требования без новой информации, обоснования или предложения размена.",
+      "theory_note_ru": "Позиционный торг неэффективен и вредит отношениям (Fisher & Ury) — вместо повтора требования нужно вскрывать интерес.",
+      "theory_source": "Fisher & Ury, Getting to Yes"
+    },
+    {
+      "id": "objective_criteria",
+      "ru_name": "Опора на объективные критерии",
+      "definition_ru": "Аргумент подкреплён внешним проверяемым стандартом (KPI, рыночный бенчмарк, данные, прецедент).",
+      "points_range": [1, 2],
+      "domain_centrality": { "hr": "central", "sales": "central", "procurement": "central" },
+      "signal_ru": "В реплике есть конкретная цифра, ссылка на данные, KPI, рыночный бенчмарк или проверяемый факт.",
+      "theory_note_ru": "Гарвардский метод: настаивать на объективных критериях вместо силового давления или мнений.",
+      "theory_source": "Fisher & Ury, Getting to Yes"
+    },
+    {
+      "id": "vague_claim",
+      "ru_name": "Голословное утверждение",
+      "definition_ru": "То же требование, но без данных/критерия («мне кажется, что я заслуживаю»).",
+      "points_range": [-2, -1],
+      "domain_centrality": { "hr": "central", "sales": "secondary", "procurement": "secondary" },
+      "signal_ru": "Оценочное суждение о себе/ситуации без цифр, фактов или источника.",
+      "theory_note_ru": "Антипаттерн объективных критериев — субъективная оценка легко отклоняется оппонентом.",
+      "theory_source": "Fisher & Ury, Getting to Yes"
+    },
+    {
+      "id": "open_question",
+      "ru_name": "Открытый вопрос",
+      "definition_ru": "Вопрос, вскрывающий интерес/проблему/ограничение оппонента вместо утверждения своей позиции.",
+      "points_range": [1, 2],
+      "domain_centrality": { "hr": "secondary", "sales": "central", "procurement": "central" },
+      "signal_ru": "Реплика — открытый вопрос («как», «что», «почему», «при каких условиях»), направленный на позицию/ограничения/проблему оппонента, а не риторический.",
+      "theory_note_ru": "Сочетание вопросов на выявление интереса (Fisher & Ury) и SPIN-вопросов о проблеме/следствиях (Rackham) — оба фреймворка показывают, что вопросы эффективнее утверждений на этапе диагностики.",
+      "theory_source": "Fisher & Ury, Getting to Yes; Rackham, SPIN Selling"
+    },
+    {
+      "id": "active_listening",
+      "ru_name": "Активное слушание / перефразирование",
+      "definition_ru": "Игрок перефразирует и признаёт сказанное оппонентом, прежде чем продолжать.",
+      "points_range": [1, 2],
+      "domain_centrality": { "hr": "secondary", "sales": "secondary", "procurement": "secondary" },
+      "signal_ru": "Реплика начинается с перефраза слов оппонента («правильно понимаю, что...», «то есть вас беспокоит...») перед тем как игрок продолжает свою мысль.",
+      "theory_note_ru": "Практика опытных переговорщиков (включая протоколы переговорщиков ФБР); прямой эффект на объективный результат подтверждён не во всех эмпирических работах, поэтому балл умеренный.",
+      "theory_source": "Academy of Negotiation; Sastrify — active listening in negotiation"
+    },
+    {
+      "id": "de_escalate",
+      "ru_name": "Деэскалация тона",
+      "definition_ru": "Игрок отделяет человека от проблемы, признаёт напряжение и возвращает разговор к сути после конфликтного момента.",
+      "points_range": [1, 2],
+      "domain_centrality": { "hr": "central", "sales": "secondary", "procurement": "secondary" },
+      "signal_ru": "Реплика признаёт напряжение/извиняется за тон и сразу возвращает разговор к содержательному вопросу.",
+      "theory_note_ru": "Гарвардский метод: отделяйте людей от проблемы. Deескалация/conflict mitigation также названа топ soft skill 2025 года (LinkedIn Workplace Learning Report).",
+      "theory_source": "Fisher & Ury, Getting to Yes; LinkedIn 2025 Workplace Learning Report"
+    },
+    {
+      "id": "escalate",
+      "ru_name": "Эскалация тона",
+      "definition_ru": "Игрок отвечает на давление ещё большим давлением/агрессией.",
+      "points_range": [-2, -2],
+      "domain_centrality": { "hr": "central", "sales": "secondary", "procurement": "secondary" },
+      "signal_ru": "Реплика повышает агрессию/ультимативность по сравнению с предыдущим ходом игрока, не предлагая содержательного выхода.",
+      "theory_note_ru": "Обратная сторона деэскалации — усиливает конфликт вместо решения проблемы.",
+      "theory_source": "Fisher & Ury, Getting to Yes"
+    },
+    {
+      "id": "personal_attack",
+      "ru_name": "Переход на личности",
+      "definition_ru": "Игрок атакует характер/компетентность оппонента вместо содержания вопроса.",
+      "points_range": [-2, -1],
+      "domain_centrality": { "hr": "secondary", "sales": "secondary", "procurement": "secondary" },
+      "signal_ru": "Реплика содержит оценку личности/компетентности оппонента, а не аргумент по существу.",
+      "theory_note_ru": "Первый принцип Гарвардского метода — отделяйте людей от проблемы; переход на личности — его прямое нарушение.",
+      "theory_source": "Fisher & Ury, Getting to Yes"
+    },
+    {
+      "id": "package_deal",
+      "ru_name": "Пакетирование / размен уступками",
+      "definition_ru": "Решение связывает ≥2 параметров сделки (цена+срок, повышение+план, объём+предоплата), а не голая уступка по одному пункту.",
+      "points_range": [1, 2],
+      "domain_centrality": { "hr": "central", "sales": "central", "procurement": "central" },
+      "signal_ru": "В реплике одновременно упомянуты минимум два разных параметра сделки, связанные друг с другом («если X, то Y»).",
+      "theory_note_ru": "Гарвардский метод: изобретайте варианты для взаимной выгоды. Пакетирование/размен эффективнее одностороннего торга по одному параметру за счёт нормы взаимности.",
+      "theory_source": "Fisher & Ury, Getting to Yes; issue bracketing research; Negotiation Journal (reciprocity)"
+    },
+    {
+      "id": "empty_threat",
+      "ru_name": "Пустая угроза / ультиматум",
+      "definition_ru": "Заявление о готовности уйти/эскалировать без реального обоснованного BATNA либо в форме ультиматума.",
+      "points_range": [-2, -1],
+      "domain_centrality": { "hr": "central", "sales": "central", "procurement": "central" },
+      "signal_ru": "Угроза уйти/разорвать переговоры без указания конкретной, проверяемой альтернативы, либо поданная в форме ультиматума.",
+      "theory_note_ru": "Классическая ошибка позиционного торга: угроза без реальной альтернативы теряет силу и разрушает доверие.",
+      "theory_source": "Fisher & Ury, Getting to Yes (BATNA)"
+    },
+    {
+      "id": "batna_leverage",
+      "ru_name": "Опора на реальную альтернативу (BATNA)",
+      "definition_ru": "Игрок спокойно и обоснованно сообщает о жизнеспособной альтернативе как о фактической границе готовности продолжать переговоры.",
+      "points_range": [1, 2],
+      "domain_centrality": { "hr": "secondary", "sales": "central", "procurement": "central" },
+      "signal_ru": "Упоминание конкретной, правдоподобной альтернативы (другой работодатель/клиент/поставщик) в спокойном, а не ультимативном тоне.",
+      "theory_note_ru": "Сила в переговорах определяется способностью уйти к жизнеспособной альтернативе (BATNA), а не громкостью угрозы.",
+      "theory_source": "Fisher & Ury, Getting to Yes (BATNA)"
+    },
+    {
+      "id": "give_up",
+      "ru_name": "Преждевременная капитуляция",
+      "definition_ru": "Игрок отказывается от своего интереса/требования без попытки размена или уточнения условий.",
+      "points_range": [-2, -1],
+      "domain_centrality": { "hr": "secondary", "sales": "secondary", "procurement": "secondary" },
+      "signal_ru": "Реплика сворачивает разговор/отказывается от цели без встречного предложения или уточняющего вопроса.",
+      "theory_note_ru": "Обратная сторона BATNA/пакетирования — уступка без переговорной работы, обычно не нужна, если есть пространство для размена.",
+      "theory_source": "Fisher & Ury, Getting to Yes"
+    },
+    {
+      "id": "anchor_with_flex",
+      "ru_name": "Якорение с гибкостью",
+      "definition_ru": "Игрок называет конкретное число/условие (первым или в ответ), сразу сопровождая его сигналом готовности к размену/уточнению.",
+      "points_range": [1, 2],
+      "domain_centrality": { "hr": "secondary", "sales": "central", "procurement": "central" },
+      "signal_ru": "Реплика содержит конкретную цифру/условие и явный сигнал гибкости («и готов обсудить...», «плюс пересмотр через...»).",
+      "theory_note_ru": "Первое предложение сильно определяет итоговую цену через эффект якорения (assimilation), но без сигнала гибкости рискует восприниматься как ультиматум.",
+      "theory_source": "Galinsky & Mussweiler (2001); PON Harvard, Making the first move"
+    },
+    {
+      "id": "recover",
+      "ru_name": "Восстановление после осечки",
+      "definition_ru": "После слабой реплики или тупика игрок конструктивно возвращает разговор в рабочее русло.",
+      "points_range": [1, 1],
+      "domain_centrality": { "hr": "secondary", "sales": "secondary", "procurement": "secondary" },
+      "signal_ru": "После предыдущей неудачной реплики игрок предлагает конкретный конструктивный следующий шаг, а не сворачивает разговор.",
+      "theory_note_ru": "Практический антипод преждевременной капитуляции — не даёт одной ошибке закрыть весь дальнейший прогресс в переговорах.",
+      "theory_source": "Практическое дополнение, симметричное give_up"
+    }
+  ]
+}
