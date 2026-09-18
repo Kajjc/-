@@ -26,7 +26,12 @@ namespace Arena.Bootstrap
             library = ScenarioLibrary.LoadAll();
             if (library.Count == 0)
             {
+                // К4 (docs/feature-hypotheses.md): раньше здесь был только
+                // Debug.LogError и return — на билде без консоли (WebGL-демо для
+                // жюри) это выглядело как чёрный/пустой экран без единой подсказки,
+                // что пошло не так. Теперь ошибка видна прямо в игре.
                 Debug.LogError("Не найдено ни одного сценария в Resources/Scenarios — движку нечего показывать.");
+                ShowFatalError("Не удалось загрузить ни одного сценария.\n\nПроверьте файлы в Resources/Scenarios — возможно, один из них повреждён или папка пуста.");
                 return;
             }
 
@@ -70,6 +75,21 @@ namespace Arena.Bootstrap
         private void OnRequestNewScenario()
         {
             adminConfig.Show(library, playerSkills, showSkillEditor: adminMode, OnConfigConfirmed);
+        }
+
+        // К4 (docs/feature-hypotheses.md): любое фатальное состояние на старте
+        // (сейчас — пустая библиотека сценариев) показывает понятный текст вместо
+        // тишины, чтобы демо не могло незаметно "зависнуть" на скрытой ошибке.
+        private void ShowFatalError(string message)
+        {
+            var root = Theme.CreateCanvas(transform, "FatalErrorCanvas");
+            var text = Theme.CreateText(root, "Message", 22, TextAnchor.MiddleCenter, Theme.Coral);
+            text.text = message;
+            var rect = text.rectTransform;
+            rect.anchorMin = new Vector2(0.1f, 0.35f);
+            rect.anchorMax = new Vector2(0.9f, 0.65f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
         }
     }
 }
