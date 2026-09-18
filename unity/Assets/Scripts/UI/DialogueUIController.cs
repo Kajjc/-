@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Arena.Dialogue;
@@ -32,6 +33,13 @@ namespace Arena.UI
         private TMP_Text endTitleText;
         private TMP_Text endSummaryText;
         private RectTransform endContent;
+
+        // Гипотеза К2 (docs/feature-hypotheses.md): плавный fade между репликами
+        // вместо мгновенной подмены текста — интерфейс ощущается более "живым".
+        private CanvasGroup opponentTextGroup;
+        private CanvasGroup optionsGroup;
+        private bool isTransitioning;
+        private const float FadeDuration = 0.15f;
 
         // Гипотеза Ю3 (docs/feature-hypotheses.md): реплики продублированы цифрами
         // и доступны с клавиатуры — быстрее и увереннее на питч-сессии, чем клики
@@ -102,6 +110,7 @@ namespace Arena.UI
             opponentRect.anchorMax = new Vector2(0.95f, 0.8f);
             opponentRect.offsetMin = Vector2.zero;
             opponentRect.offsetMax = Vector2.zero;
+            opponentTextGroup = opponentText.gameObject.AddComponent<CanvasGroup>();
 
             var optionsGo = new GameObject("Options", typeof(RectTransform));
             optionsGo.transform.SetParent(root, false);
@@ -110,6 +119,7 @@ namespace Arena.UI
             optionsContainer.anchorMax = new Vector2(0.95f, 0.5f);
             optionsContainer.offsetMin = Vector2.zero;
             optionsContainer.offsetMax = Vector2.zero;
+            optionsGroup = optionsGo.AddComponent<CanvasGroup>();
             var layout = optionsGo.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 10;
             layout.childForceExpandHeight = false;
@@ -183,7 +193,7 @@ namespace Arena.UI
         private void Update()
         {
             if (root == null || !root.gameObject.activeInHierarchy) return;
-            if (endPanel.gameObject.activeSelf || currentOptions.Count == 0) return;
+            if (endPanel.gameObject.activeSelf || currentOptions.Count == 0 || isTransitioning) return;
 
             for (int i = 0; i < currentOptions.Count && i < 9; i++)
             {
@@ -378,8 +388,36 @@ namespace Arena.UI
 
         private void OnOptionChosen(DialogueOption option)
         {
+            if (isTransitioning) return;
             engine.ChooseOption(option);
+            StartCoroutine(RenderWithFade());
+        }
+
+        // К2: реплика и варианты ответа гаснут, меняются под скрытием и проявляются
+        // заново — вместо мгновенной подмены текста при выборе реплики.
+        private IEnumerator RenderWithFade()
+        {
+            isTransitioning = true;
+            yield return StartCoroutine(FadeTo(0f));
             Render();
+            yield return StartCoroutine(FadeTo(1f));
+            isTransitioning = false;
+        }
+
+        private IEnumerator FadeTo(float target)
+        {
+            float start = opponentTextGroup.alpha;
+            float t = 0f;
+            while (t < FadeDuration)
+            {
+                t += Time.deltaTime;
+                float alpha = Mathf.Lerp(start, target, t / FadeDuration);
+                opponentTextGroup.alpha = alpha;
+                optionsGroup.alpha = alpha;
+                yield return null;
+            }
+            opponentTextGroup.alpha = target;
+            optionsGroup.alpha = target;
         }
 
         private void RenderEndScreen()
