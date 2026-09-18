@@ -70,7 +70,7 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "AdminConfigCanvas");
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 18, TextAnchor.MiddleLeft, Theme.Teal);
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleLeft, Theme.Teal);
             eyebrow.text = showSkillEditor ? "АДМИНИСТРАТОР — НАСТРОЙКА КЕЙСА" : "НАСТРОЙКА СЦЕНАРИЯ";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.06f, 0.9f);
@@ -105,11 +105,14 @@ namespace Arena.UI
             BuildDifficultyRow(y);
             y -= FieldStep;
 
+            // Более высокая строка, чем у остальных чипов: "напористый / скептический"
+            // при увеличенном шрифте переносится на 2 строки, и стандартных 0.06
+            // высоты не хватает — текст вылезал бы за пределы плашки чипа.
             BuildChipRow("Тон собеседника", DistinctInOrder(library.Select(s => s.meta.tone)), y, toneChips, v =>
             {
                 selectedTone = v;
                 UpdatePreview();
-            });
+            }, rowHeight: 0.1f);
 
             var previewStrip = Theme.CreatePanel(root, "PreviewStrip", new Color(Theme.Teal.r, Theme.Teal.g, Theme.Teal.b, 0.14f));
             previewStrip.anchorMin = new Vector2(0.06f, 0.06f);
@@ -117,14 +120,14 @@ namespace Arena.UI
             previewStrip.offsetMin = Vector2.zero;
             previewStrip.offsetMax = Vector2.zero;
 
-            scenarioPreviewText = Theme.CreateText(previewStrip, "ScenarioText", 17, TextAnchor.UpperLeft, Theme.Parchment);
+            scenarioPreviewText = Theme.CreateText(previewStrip, "ScenarioText", 19, TextAnchor.UpperLeft, Theme.Parchment);
             var previewTextRect = scenarioPreviewText.rectTransform;
             previewTextRect.anchorMin = new Vector2(0.03f, 0.52f);
             previewTextRect.anchorMax = new Vector2(0.68f, 0.94f);
             previewTextRect.offsetMin = Vector2.zero;
             previewTextRect.offsetMax = Vector2.zero;
 
-            rolePreviewText = Theme.CreateText(previewStrip, "RoleText", 15, TextAnchor.UpperLeft, Theme.Muted);
+            rolePreviewText = Theme.CreateText(previewStrip, "RoleText", 17, TextAnchor.UpperLeft, Theme.Muted);
             var roleTextRect = rolePreviewText.rectTransform;
             roleTextRect.anchorMin = new Vector2(0.03f, 0.06f);
             roleTextRect.anchorMax = new Vector2(0.68f, 0.5f);
@@ -173,9 +176,9 @@ namespace Arena.UI
                 groupLayout.childControlWidth = true;
                 groupLayout.childControlHeight = true;
 
-                var labelText = Theme.CreateText(groupGo.transform, "Label", 15, TextAnchor.MiddleLeft, Theme.Muted);
+                var labelText = Theme.CreateText(groupGo.transform, "Label", 17, TextAnchor.MiddleLeft, Theme.Muted);
                 labelText.text = SkillLabels[s];
-                labelText.gameObject.AddComponent<LayoutElement>().minWidth = 78;
+                labelText.gameObject.AddComponent<LayoutElement>().minWidth = 92;
 
                 var buttons = new List<(int, Image, Text)>();
                 for (int level = 1; level <= 3; level++)
@@ -184,12 +187,12 @@ namespace Arena.UI
                     string capturedSkillId = skillId;
                     var btnGo = new GameObject($"{skillId}_{level}", typeof(RectTransform));
                     btnGo.transform.SetParent(groupGo.transform, false);
-                    btnGo.AddComponent<LayoutElement>().minWidth = 32;
+                    btnGo.AddComponent<LayoutElement>().minWidth = 38;
                     var bg = btnGo.AddComponent<Image>();
                     var button = btnGo.AddComponent<Button>();
                     button.targetGraphic = bg;
                     button.onClick.AddListener(() => SetSkillLevel(capturedSkillId, capturedLevel));
-                    var txt = Theme.CreateText(btnGo.transform, "Label", 14, TextAnchor.MiddleCenter, Theme.Parchment);
+                    var txt = Theme.CreateText(btnGo.transform, "Label", 16, TextAnchor.MiddleCenter, Theme.Parchment);
                     txt.text = level.ToString();
                     Theme.StretchFull(txt.rectTransform);
                     buttons.Add((level, bg, txt));
@@ -226,7 +229,7 @@ namespace Arena.UI
 
         private void BuildFieldLabel(string label, float y)
         {
-            var labelText = Theme.CreateText(root, $"{label}Label", 14, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
+            var labelText = Theme.CreateText(root, $"{label}Label", 16, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
             labelText.text = label;
             var labelRect = labelText.rectTransform;
             labelRect.anchorMin = new Vector2(0.06f, y + 0.065f);
@@ -235,7 +238,7 @@ namespace Arena.UI
             labelRect.offsetMax = Vector2.zero;
         }
 
-        private void BuildChipRow(string label, List<string> values, float y, List<(string, Image, Text)> registry, Action<string> onSelect)
+        private void BuildChipRow(string label, List<string> values, float y, List<(string, Image, Text)> registry, Action<string> onSelect, float rowHeight = 0.06f)
         {
             BuildFieldLabel(label.ToUpperInvariant(), y);
 
@@ -243,7 +246,7 @@ namespace Arena.UI
             rowGo.transform.SetParent(root, false);
             var row = (RectTransform)rowGo.transform;
             row.anchorMin = new Vector2(0.06f, y);
-            row.anchorMax = new Vector2(0.94f, y + 0.06f);
+            row.anchorMax = new Vector2(0.94f, y + rowHeight);
             row.offsetMin = Vector2.zero;
             row.offsetMax = Vector2.zero;
             var layout = rowGo.AddComponent<HorizontalLayoutGroup>();
@@ -307,7 +310,7 @@ namespace Arena.UI
                 difficultyDots.Add(dotImage);
             }
 
-            var difficultyLabel = Theme.CreateText(root, "DifficultyValue", 15, TextAnchor.MiddleLeft, Theme.Muted);
+            var difficultyLabel = Theme.CreateText(root, "DifficultyValue", 17, TextAnchor.MiddleLeft, Theme.Muted);
             difficultyLabel.name = "DifficultyValueText";
             var diffValRect = difficultyLabel.rectTransform;
             diffValRect.anchorMin = new Vector2(0.42f, y);

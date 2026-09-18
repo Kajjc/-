@@ -36,7 +36,7 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "TheoryCanvas");
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 18, TextAnchor.MiddleLeft, Theme.Teal);
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleLeft, Theme.Teal);
             eyebrow.text = "ТЕОРИЯ И ТЕХНИКИ";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.06f, 0.9f);
@@ -100,13 +100,13 @@ namespace Arena.UI
             var titleText = isHighlighted
                 ? $"{technique.ru_name}   ·   встретилось в этом прохождении"
                 : technique.ru_name;
-            var title = Theme.CreateText(card, "Title", 19, TextAnchor.UpperLeft, isHighlighted ? Theme.Amber : Theme.Parchment);
+            var title = Theme.CreateText(card, "Title", 21, TextAnchor.UpperLeft, isHighlighted ? Theme.Amber : Theme.Parchment);
             title.text = titleText;
 
-            var definition = Theme.CreateText(card, "Definition", 15, TextAnchor.UpperLeft, Theme.Muted);
+            var definition = Theme.CreateText(card, "Definition", 17, TextAnchor.UpperLeft, Theme.Muted);
             definition.text = technique.definition_ru;
 
-            var theory = Theme.CreateText(card, "Theory", 15, TextAnchor.UpperLeft, Theme.Muted);
+            var theory = Theme.CreateText(card, "Theory", 17, TextAnchor.UpperLeft, Theme.Muted);
             theory.text = $"{technique.theory_note_ru} — {technique.theory_source}";
         }
     }

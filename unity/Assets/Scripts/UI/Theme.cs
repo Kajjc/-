@@ -145,12 +145,12 @@ namespace Arena.UI
             button.colors = colors;
             if (onClick != null) button.onClick.AddListener(onClick);
 
-            var text = CreateText(go.transform, "Label", 20, TextAnchor.MiddleLeft, textColor);
+            var text = CreateText(go.transform, "Label", 22, TextAnchor.MiddleLeft, textColor);
             var textRect = text.rectTransform;
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(18, 4);
-            textRect.offsetMax = new Vector2(-18, -4);
+            textRect.offsetMin = new Vector2(18, 6);
+            textRect.offsetMax = new Vector2(-18, -6);
             text.text = label;
 
             return button;
@@ -167,10 +167,10 @@ namespace Arena.UI
             if (onClick != null) button.onClick.AddListener(onClick);
 
             var layoutElement = go.AddComponent<LayoutElement>();
-            layoutElement.minHeight = 44;
-            layoutElement.minWidth = 120;
+            layoutElement.minHeight = 48;
+            layoutElement.minWidth = 135;
 
-            text = CreateText(go.transform, "Label", 18, TextAnchor.MiddleCenter, Parchment);
+            text = CreateText(go.transform, "Label", 20, TextAnchor.MiddleCenter, Parchment);
             var textRect = text.rectTransform;
             StretchFull(textRect);
             text.text = label;

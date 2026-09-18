@@ -55,7 +55,7 @@ namespace Arena.UI
             header.offsetMin = Vector2.zero;
             header.offsetMax = Vector2.zero;
 
-            var eyebrow = Theme.CreateText(header, "Eyebrow", 18, TextAnchor.MiddleLeft, Theme.Amber);
+            var eyebrow = Theme.CreateText(header, "Eyebrow", 20, TextAnchor.MiddleLeft, Theme.Amber);
             eyebrow.text = "ТЕСТ НАВЫКОВ";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0f, 0f);
@@ -63,7 +63,7 @@ namespace Arena.UI
             eyebrowRect.offsetMin = Vector2.zero;
             eyebrowRect.offsetMax = Vector2.zero;
 
-            progressText = Theme.CreateText(header, "Progress", 16, TextAnchor.MiddleRight, Theme.Muted);
+            progressText = Theme.CreateText(header, "Progress", 18, TextAnchor.MiddleRight, Theme.Muted);
             var progressTextRect = progressText.rectTransform;
             progressTextRect.anchorMin = new Vector2(0.5f, 0f);
             progressTextRect.anchorMax = new Vector2(1f, 1f);
@@ -88,7 +88,7 @@ namespace Arena.UI
             statementCard.offsetMin = Vector2.zero;
             statementCard.offsetMax = Vector2.zero;
 
-            statementText = Theme.CreateText(statementCard, "Statement", 26, TextAnchor.MiddleCenter, Theme.Parchment);
+            statementText = Theme.CreateText(statementCard, "Statement", 28, TextAnchor.MiddleCenter, Theme.Parchment);
             var statementRect = statementText.rectTransform;
             statementRect.anchorMin = new Vector2(0.06f, 0.1f);
             statementRect.anchorMax = new Vector2(0.94f, 0.9f);

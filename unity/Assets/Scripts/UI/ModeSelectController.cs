@@ -33,7 +33,7 @@ namespace Arena.UI
             root = Theme.CreateCanvas(transform, "ModeSelectCanvas");
             Theme.SetCanvasBackground(root, "Backgrounds/title");
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 18, TextAnchor.MiddleCenter, Theme.Amber);
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleCenter, Theme.Amber);
             eyebrow.text = "АРЕНА ПЕРЕГОВОРОВ";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.1f, 0.68f);
@@ -41,7 +41,7 @@ namespace Arena.UI
             eyebrowRect.offsetMin = Vector2.zero;
             eyebrowRect.offsetMax = Vector2.zero;
 
-            var title = Theme.CreateText(root, "Title", 28, TextAnchor.MiddleCenter, Theme.Parchment);
+            var title = Theme.CreateText(root, "Title", 30, TextAnchor.MiddleCenter, Theme.Parchment);
             title.text = "С чего начнём?";
             var titleRect = title.rectTransform;
             titleRect.anchorMin = new Vector2(0.1f, 0.58f);
@@ -67,7 +67,7 @@ namespace Arena.UI
         private void BuildOption(float anchorMinX, float anchorMaxX, string title, string subtitle, Color accent, Action onClick)
         {
             var card = Theme.CreatePanel(root, $"Option_{title}", new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.05f));
-            card.anchorMin = new Vector2(anchorMinX, 0.28f);
+            card.anchorMin = new Vector2(anchorMinX, 0.22f);
             card.anchorMax = new Vector2(anchorMaxX, 0.55f);
             card.offsetMin = Vector2.zero;
             card.offsetMax = Vector2.zero;
@@ -78,19 +78,19 @@ namespace Arena.UI
             accentBar.offsetMin = Vector2.zero;
             accentBar.offsetMax = Vector2.zero;
 
-            var titleText = Theme.CreateText(card, "Title", 22, TextAnchor.UpperLeft, Theme.Parchment);
+            var titleText = Theme.CreateText(card, "Title", 24, TextAnchor.UpperLeft, Theme.Parchment);
             titleText.text = title;
             var titleRect = titleText.rectTransform;
-            titleRect.anchorMin = new Vector2(0.08f, 0.68f);
-            titleRect.anchorMax = new Vector2(0.92f, 0.88f);
+            titleRect.anchorMin = new Vector2(0.08f, 0.7f);
+            titleRect.anchorMax = new Vector2(0.92f, 0.9f);
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            var subtitleText = Theme.CreateText(card, "Subtitle", 17, TextAnchor.UpperLeft, Theme.Muted);
+            var subtitleText = Theme.CreateText(card, "Subtitle", 19, TextAnchor.UpperLeft, Theme.Muted);
             subtitleText.text = subtitle;
             var subtitleRect = subtitleText.rectTransform;
-            subtitleRect.anchorMin = new Vector2(0.08f, 0.3f);
-            subtitleRect.anchorMax = new Vector2(0.92f, 0.65f);
+            subtitleRect.anchorMin = new Vector2(0.08f, 0.1f);
+            subtitleRect.anchorMax = new Vector2(0.92f, 0.62f);
             subtitleRect.offsetMin = Vector2.zero;
             subtitleRect.offsetMax = Vector2.zero;
 

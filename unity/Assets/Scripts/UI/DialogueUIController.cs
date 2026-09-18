@@ -75,7 +75,7 @@ namespace Arena.UI
             portraitTintRect.offsetMax = Vector2.zero;
             portraitTint = portraitTintRect.gameObject;
 
-            opponentRoleText = Theme.CreateText(root, "OpponentRole", 18, TextAnchor.UpperLeft, Theme.Parchment);
+            opponentRoleText = Theme.CreateText(root, "OpponentRole", 20, TextAnchor.UpperLeft, Theme.Parchment);
             var roleRect = opponentRoleText.rectTransform;
             roleRect.anchorMin = new Vector2(0.18f, 0.88f);
             roleRect.anchorMax = new Vector2(0.6f, 0.95f);
@@ -95,7 +95,7 @@ namespace Arena.UI
             pipsLayout.childForceExpandWidth = false;
             pipsLayout.childForceExpandHeight = true;
 
-            opponentText = Theme.CreateText(root, "OpponentLine", 26, TextAnchor.UpperLeft, Theme.Parchment);
+            opponentText = Theme.CreateText(root, "OpponentLine", 28, TextAnchor.UpperLeft, Theme.Parchment);
             var opponentRect = opponentText.rectTransform;
             opponentRect.anchorMin = new Vector2(0.05f, 0.55f);
             opponentRect.anchorMax = new Vector2(0.95f, 0.8f);
@@ -131,14 +131,14 @@ namespace Arena.UI
             outcomeBadge.offsetMin = Vector2.zero;
             outcomeBadge.offsetMax = Vector2.zero;
 
-            endTitleText = Theme.CreateText(endPanel, "EndTitle", 30, TextAnchor.MiddleLeft, Theme.Parchment);
+            endTitleText = Theme.CreateText(endPanel, "EndTitle", 32, TextAnchor.MiddleLeft, Theme.Parchment);
             var titleRect = endTitleText.rectTransform;
             titleRect.anchorMin = new Vector2(0.16f, 0.84f);
             titleRect.anchorMax = new Vector2(0.94f, 0.93f);
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            endSummaryText = Theme.CreateText(endPanel, "EndSummary", 18, TextAnchor.UpperLeft, Theme.Muted);
+            endSummaryText = Theme.CreateText(endPanel, "EndSummary", 20, TextAnchor.UpperLeft, Theme.Muted);
             var summaryRect = endSummaryText.rectTransform;
             summaryRect.anchorMin = new Vector2(0.06f, 0.74f);
             summaryRect.anchorMax = new Vector2(0.94f, 0.83f);
@@ -218,9 +218,9 @@ namespace Arena.UI
             // баг — исчезает сама после первого хода, лишнего экрана не создаёт.
             if (engine.Transcript.Count == 0)
             {
-                var hint = Theme.CreateText(optionsContainer, "Hint", 14, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
+                var hint = Theme.CreateText(optionsContainer, "Hint", 16, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
                 hint.text = "Серые реплики пока недоступны — рядом с ними указано, какого навыка не хватает.";
-                hint.gameObject.AddComponent<LayoutElement>().minHeight = 22;
+                hint.gameObject.AddComponent<LayoutElement>().minHeight = 26;
             }
 
             foreach (var option in engine.CurrentNode.options)
@@ -250,7 +250,7 @@ namespace Arena.UI
             button.targetGraphic = image;
             button.interactable = available;
             if (onClick != null) button.onClick.AddListener(onClick);
-            go.AddComponent<LayoutElement>().minHeight = 52;
+            go.AddComponent<LayoutElement>().minHeight = 58;
 
             var rowLayout = go.AddComponent<HorizontalLayoutGroup>();
             rowLayout.padding = new RectOffset(18, 18, 6, 6);
@@ -262,7 +262,7 @@ namespace Arena.UI
             rowLayout.childControlHeight = true;
 
             var textColor = available ? Theme.Parchment : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.62f);
-            var label = Theme.CreateText(go.transform, "Label", 20, TextAnchor.MiddleLeft, textColor);
+            var label = Theme.CreateText(go.transform, "Label", 22, TextAnchor.MiddleLeft, textColor);
             label.text = $"{number}.  {option.text}";
             label.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
 
@@ -282,15 +282,15 @@ namespace Arena.UI
             badgeLayout.childForceExpandHeight = true;
             badgeLayout.childControlWidth = true;
             badgeLayout.childControlHeight = true;
-            badgeGo.AddComponent<LayoutElement>().minWidth = 54;
+            badgeGo.AddComponent<LayoutElement>().minWidth = 62;
 
             var accent = Theme.ForSkill(requirement.skill);
 
             var iconGo = new GameObject("Icon", typeof(RectTransform));
             iconGo.transform.SetParent(badgeGo.transform, false);
             var iconLayout = iconGo.AddComponent<LayoutElement>();
-            iconLayout.minWidth = 14;
-            iconLayout.minHeight = 14;
+            iconLayout.minWidth = 16;
+            iconLayout.minHeight = 16;
             var iconImage = iconGo.AddComponent<Image>();
             var sprite = Theme.TryLoadSprite($"Icons/skill_{requirement.skill}");
             if (sprite != null)
@@ -305,7 +305,7 @@ namespace Arena.UI
                 iconImage.color = accent;
             }
 
-            var levelText = Theme.CreateText(badgeGo.transform, "Level", 13, TextAnchor.MiddleLeft, accent);
+            var levelText = Theme.CreateText(badgeGo.transform, "Level", 15, TextAnchor.MiddleLeft, accent);
             levelText.text = $"≥{requirement.level}";
         }
 
@@ -359,9 +359,9 @@ namespace Arena.UI
             sizeFit.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var accent = Theme.ForSkill(skillId);
-            var labelText = Theme.CreateText(groupGo.transform, "Label", 13, TextAnchor.MiddleLeft, Theme.Muted);
+            var labelText = Theme.CreateText(groupGo.transform, "Label", 15, TextAnchor.MiddleLeft, Theme.Muted);
             labelText.text = label;
-            labelText.gameObject.AddComponent<LayoutElement>().minWidth = 60;
+            labelText.gameObject.AddComponent<LayoutElement>().minWidth = 72;
 
             for (int i = 1; i <= 3; i++)
             {
@@ -528,14 +528,14 @@ namespace Arena.UI
 
         private void AddSectionLabel(string text)
         {
-            var label = Theme.CreateText(endContent, "SectionLabel", 13, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
+            var label = Theme.CreateText(endContent, "SectionLabel", 15, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
             label.text = text;
-            label.gameObject.AddComponent<LayoutElement>().minHeight = 20;
+            label.gameObject.AddComponent<LayoutElement>().minHeight = 24;
         }
 
         private void AddPlainLine(string text, Color color)
         {
-            Theme.CreateText(endContent, "Line", 15, TextAnchor.UpperLeft, color).text = text;
+            Theme.CreateText(endContent, "Line", 17, TextAnchor.UpperLeft, color).text = text;
         }
 
         // Сетка вместо строки: после углубления сценариев (docs/feature-hypotheses.md,
@@ -547,8 +547,8 @@ namespace Arena.UI
             var rowGo = new GameObject("ScoreRow", typeof(RectTransform));
             rowGo.transform.SetParent(endContent, false);
             var grid = rowGo.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(150, 30);
-            grid.spacing = new Vector2(8, 8);
+            grid.cellSize = new Vector2(175, 36);
+            grid.spacing = new Vector2(10, 10);
             grid.childAlignment = TextAnchor.MiddleLeft;
             grid.constraint = GridLayoutGroup.Constraint.Flexible;
             rowGo.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -558,7 +558,7 @@ namespace Arena.UI
                 bool positive = kv.Value > 0;
                 var accent = positive ? Theme.Sage : Theme.Coral;
                 var chipBg = Theme.CreatePanel(rowGo.transform, "Chip", new Color(accent.r, accent.g, accent.b, 0.16f));
-                var chipText = Theme.CreateText(chipBg, "Label", 14, TextAnchor.MiddleCenter, accent);
+                var chipText = Theme.CreateText(chipBg, "Label", 16, TextAnchor.MiddleCenter, accent);
                 chipText.text = $"{kv.Key} {(positive ? "+" : "")}{kv.Value}";
                 Theme.StretchFull(chipText.rectTransform);
             }
@@ -580,21 +580,21 @@ namespace Arena.UI
             cardLayout.childControlHeight = true;
             card.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            var tag = Theme.CreateText(card, "Tag", 12, TextAnchor.UpperLeft, accent);
+            var tag = Theme.CreateText(card, "Tag", 14, TextAnchor.UpperLeft, accent);
             tag.text = info != null ? info.ru_name.ToUpperInvariant() : opt.technique;
 
-            var quote = Theme.CreateText(card, "Quote", 15, TextAnchor.UpperLeft, Theme.Parchment);
+            var quote = Theme.CreateText(card, "Quote", 17, TextAnchor.UpperLeft, Theme.Parchment);
             quote.text = $"«{opt.text}»";
 
             if (!isStrength && !string.IsNullOrEmpty(opt.betterAlternative))
             {
-                var better = Theme.CreateText(card, "Better", 15, TextAnchor.UpperLeft, Theme.Muted);
+                var better = Theme.CreateText(card, "Better", 17, TextAnchor.UpperLeft, Theme.Muted);
                 better.text = $"Лучше: {opt.betterAlternative}";
             }
 
             if (info != null && !string.IsNullOrEmpty(info.theory_note_ru))
             {
-                var theory = Theme.CreateText(card, "Theory", 13, TextAnchor.UpperLeft, Theme.EyebrowMuted);
+                var theory = Theme.CreateText(card, "Theory", 15, TextAnchor.UpperLeft, Theme.EyebrowMuted);
                 theory.text = info.theory_note_ru;
             }
         }
