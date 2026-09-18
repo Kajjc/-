@@ -46,6 +46,12 @@ unity/WebGL-Build/
 # Crashlytics generated file
 unity/crashlytics-build.properties
 
+# Raw system font copy used once to bake the TMP SDF atlas (Fonts/UIFont SDF.asset,
+# see Assets/Editor/TmpFontBuilder.cs) — not ours to redistribute, only the derived
+# rasterized atlas ships in the repo/build.
+unity/Assets/Fonts/_SourceOnly/
+unity/Assets/Fonts/_SourceOnly.meta
+
 # Local addressables/asset bundle caches
 unity/[Aa]ssets/AddressableAssetsData/*/*.bin*
 unity/[Aa]ssets/StreamingAssets/aa.meta

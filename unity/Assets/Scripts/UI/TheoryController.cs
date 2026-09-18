@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Arena.Dialogue;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -53,7 +54,7 @@ namespace Arena.UI
                     Hide();
                     onBack?.Invoke();
                 });
-            backButton.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleCenter;
+            backButton.GetComponentInChildren<TMP_Text>().alignment = TextAlignmentOptions.Center;
             var backRect = (RectTransform)backButton.transform;
             backRect.anchorMin = new Vector2(0.78f, 0.9f);
             backRect.anchorMax = new Vector2(0.94f, 0.97f);

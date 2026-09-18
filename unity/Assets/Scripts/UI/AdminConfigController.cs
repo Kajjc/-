@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Arena.Dialogue;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,14 +23,14 @@ namespace Arena.UI
         private static readonly string[] SkillLabels = { "Напор", "Эмпатия", "Логика" };
 
         private RectTransform root;
-        private Text rolePreviewText;
-        private Text scenarioPreviewText;
-        private Text difficultyValueText;
+        private TMP_Text rolePreviewText;
+        private TMP_Text scenarioPreviewText;
+        private TMP_Text difficultyValueText;
 
-        private readonly List<(string value, Image bg, Text txt)> sphereChips = new List<(string, Image, Text)>();
-        private readonly List<(string value, Image bg, Text txt)> toneChips = new List<(string, Image, Text)>();
+        private readonly List<(string value, Image bg, TMP_Text txt)> sphereChips = new List<(string, Image, TMP_Text)>();
+        private readonly List<(string value, Image bg, TMP_Text txt)> toneChips = new List<(string, Image, TMP_Text)>();
         private readonly List<Image> difficultyDots = new List<Image>();
-        private readonly Dictionary<string, List<(int level, Image bg, Text txt)>> skillButtons = new Dictionary<string, List<(int, Image, Text)>>();
+        private readonly Dictionary<string, List<(int level, Image bg, TMP_Text txt)>> skillButtons = new Dictionary<string, List<(int, Image, TMP_Text)>>();
 
         private List<ScenarioData> library;
         private bool showSkillEditor;
@@ -140,8 +141,8 @@ namespace Arena.UI
             ctaRect.offsetMin = Vector2.zero;
             ctaRect.offsetMax = Vector2.zero;
             var ctaButton = Theme.CreateButton(ctaRect, "Начать переговоры →", Theme.Amber, Theme.Navy, OnStartClicked);
-            var ctaLabel = ctaButton.GetComponentInChildren<Text>();
-            ctaLabel.alignment = TextAnchor.MiddleCenter;
+            var ctaLabel = ctaButton.GetComponentInChildren<TMP_Text>();
+            ctaLabel.alignment = TextAlignmentOptions.Center;
             Theme.StretchFull((RectTransform)ctaButton.transform);
         }
 
@@ -180,7 +181,7 @@ namespace Arena.UI
                 labelText.text = SkillLabels[s];
                 labelText.gameObject.AddComponent<LayoutElement>().minWidth = 92;
 
-                var buttons = new List<(int, Image, Text)>();
+                var buttons = new List<(int, Image, TMP_Text)>();
                 for (int level = 1; level <= 3; level++)
                 {
                     int capturedLevel = level;
@@ -238,7 +239,7 @@ namespace Arena.UI
             labelRect.offsetMax = Vector2.zero;
         }
 
-        private void BuildChipRow(string label, List<string> values, float y, List<(string, Image, Text)> registry, Action<string> onSelect, float rowHeight = 0.06f)
+        private void BuildChipRow(string label, List<string> values, float y, List<(string, Image, TMP_Text)> registry, Action<string> onSelect, float rowHeight = 0.06f)
         {
             BuildFieldLabel(label.ToUpperInvariant(), y);
 
@@ -265,7 +266,7 @@ namespace Arena.UI
             }
         }
 
-        private void SelectChip(List<(string value, Image bg, Text txt)> registry, string selected, Action<string> onSelect)
+        private void SelectChip(List<(string value, Image bg, TMP_Text txt)> registry, string selected, Action<string> onSelect)
         {
             foreach (var (value, bg, txt) in registry)
                 Theme.SetChipSelected(bg, txt, value == selected);

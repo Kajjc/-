@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Arena.Dialogue;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,14 +23,14 @@ namespace Arena.UI
         private RectTransform portrait;
         private Image portraitImage;
         private GameObject portraitTint;
-        private Text opponentRoleText;
+        private TMP_Text opponentRoleText;
         private RectTransform pipsRow;
-        private Text opponentText;
+        private TMP_Text opponentText;
         private RectTransform optionsContainer;
         private RectTransform endPanel;
         private RectTransform outcomeBadge;
-        private Text endTitleText;
-        private Text endSummaryText;
+        private TMP_Text endTitleText;
+        private TMP_Text endSummaryText;
         private RectTransform endContent;
 
         // Гипотеза Ю3 (docs/feature-hypotheses.md): реплики продублированы цифрами
@@ -155,7 +156,7 @@ namespace Arena.UI
             scrollRoot.offsetMax = Vector2.zero;
 
             var restartButton = Theme.CreateButton(endPanel, "Пройти ещё раз", new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.08f), Theme.Parchment, RestartScenario);
-            restartButton.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleCenter;
+            restartButton.GetComponentInChildren<TMP_Text>().alignment = TextAlignmentOptions.Center;
             var restartRect = (RectTransform)restartButton.transform;
             restartRect.anchorMin = new Vector2(0.06f, 0.05f);
             restartRect.anchorMax = new Vector2(0.32f, 0.14f);
@@ -163,7 +164,7 @@ namespace Arena.UI
             restartRect.offsetMax = Vector2.zero;
 
             var theoryButton = Theme.CreateButton(endPanel, "Теория и техники", new Color(Theme.Teal.r, Theme.Teal.g, Theme.Teal.b, 0.18f), Theme.Parchment, OnOpenTheoryClicked);
-            theoryButton.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleCenter;
+            theoryButton.GetComponentInChildren<TMP_Text>().alignment = TextAlignmentOptions.Center;
             var theoryRect = (RectTransform)theoryButton.transform;
             theoryRect.anchorMin = new Vector2(0.35f, 0.05f);
             theoryRect.anchorMax = new Vector2(0.61f, 0.14f);
@@ -171,7 +172,7 @@ namespace Arena.UI
             theoryRect.offsetMax = Vector2.zero;
 
             var newScenarioButton = Theme.CreateButton(endPanel, "Другой сценарий", Theme.Amber, Theme.Navy, OnRequestNewScenario);
-            newScenarioButton.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleCenter;
+            newScenarioButton.GetComponentInChildren<TMP_Text>().alignment = TextAlignmentOptions.Center;
             var newScenarioRect = (RectTransform)newScenarioButton.transform;
             newScenarioRect.anchorMin = new Vector2(0.64f, 0.05f);
             newScenarioRect.anchorMax = new Vector2(0.94f, 0.14f);

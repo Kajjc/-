@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -33,7 +34,7 @@ namespace Arena.UI
         // цитат) — на таком объёме текста заметно теряет контраст.
         public static readonly Color EyebrowMuted = new Color(Parchment.r, Parchment.g, Parchment.b, 0.8f);
 
-        private static Font cachedFont;
+        private static TMP_FontAsset cachedFont;
 
         public static Color ForSkill(string skill)
         {
@@ -63,11 +64,28 @@ namespace Arena.UI
             return c;
         }
 
-        public static Font Font()
+        // К1 (docs/feature-hypotheses.md): встроенный LegacyRuntime.ttf не содержит
+        // кириллических глифов на WebGL (подтверждено 18.09 — весь русский текст
+        // пропадал в билде). UIFont SDF.asset — статический TMP-атлас, собранный
+        // Assets/Editor/TmpFontBuilder.cs из системного Segoe UI, покрывает Basic
+        // Latin + Cyrillic + пунктуацию, реально встречающуюся в контенте игры.
+        public static TMP_FontAsset FontAsset()
         {
             if (cachedFont == null)
-                cachedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                cachedFont = Resources.Load<TMP_FontAsset>("Fonts/UIFont SDF");
             return cachedFont;
+        }
+
+        private static TextAlignmentOptions ToTmpAlignment(TextAnchor anchor)
+        {
+            switch (anchor)
+            {
+                case TextAnchor.UpperLeft: return TextAlignmentOptions.TopLeft;
+                case TextAnchor.MiddleLeft: return TextAlignmentOptions.Left;
+                case TextAnchor.MiddleCenter: return TextAlignmentOptions.Center;
+                case TextAnchor.MiddleRight: return TextAlignmentOptions.Right;
+                default: return TextAlignmentOptions.Center;
+            }
         }
 
         public static void EnsureEventSystem()
@@ -115,17 +133,17 @@ namespace Arena.UI
             rect.offsetMax = Vector2.zero;
         }
 
-        public static Text CreateText(Transform parent, string name, int fontSize, TextAnchor anchor, Color color)
+        public static TMP_Text CreateText(Transform parent, string name, int fontSize, TextAnchor anchor, Color color)
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
-            var text = go.AddComponent<Text>();
-            text.font = Font();
+            var text = go.AddComponent<TextMeshProUGUI>();
+            text.font = FontAsset();
             text.fontSize = fontSize;
-            text.alignment = anchor;
+            text.alignment = ToTmpAlignment(anchor);
             text.color = color;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.overflowMode = TextOverflowModes.Overflow;
             return text;
         }
 
@@ -158,7 +176,7 @@ namespace Arena.UI
 
         // Чип-переключатель (сфера/тон/уровень сложности в админ-конфиге) — пилюля,
         // которая явно показывает состояние "выбрано"/"не выбрано".
-        public static Button CreateChip(Transform parent, string label, UnityEngine.Events.UnityAction onClick, out Image background, out Text text)
+        public static Button CreateChip(Transform parent, string label, UnityEngine.Events.UnityAction onClick, out Image background, out TMP_Text text)
         {
             var go = new GameObject($"Chip_{label}", typeof(RectTransform));
             go.transform.SetParent(parent, false);
@@ -299,7 +317,7 @@ namespace Arena.UI
             return scrollbar;
         }
 
-        public static void SetChipSelected(Image background, Text text, bool selected)
+        public static void SetChipSelected(Image background, TMP_Text text, bool selected)
         {
             if (selected)
             {

@@ -1,5 +1,6 @@
 using System;
 using Arena.Dialogue;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,10 +11,10 @@ namespace Arena.UI
     public class SkillTestController : MonoBehaviour
     {
         private RectTransform root;
-        private Text progressText;
+        private TMP_Text progressText;
         private RectTransform progressFill;
         private RectTransform progressTrack;
-        private Text statementText;
+        private TMP_Text statementText;
         private RectTransform answersContainer;
 
         private Action<PlayerSkills> onComplete;
