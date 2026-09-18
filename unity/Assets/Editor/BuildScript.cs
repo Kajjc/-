@@ -12,6 +12,13 @@ namespace Arena.EditorTools
 
         public static void BuildWebGL()
         {
+            // Без сжатия — сторонние статические хостинги (itch.io и т.п.) не всегда
+            // отдают .gz/.br файлы с корректным Content-Encoding, из-за чего загрузчик
+            // Unity зависает/не может распаковать билд (наблюдалось на itch.io: iframe
+            // падает по таймауту "took too long to respond"). Билд крупнее, зато
+            // работает на любом хостинге без специальной настройки заголовков сервера.
+            PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
+
             var scenes = EditorBuildSettingsScene.GetActiveSceneList(EditorBuildSettings.scenes);
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {

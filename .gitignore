@@ -42,6 +42,7 @@ unity/*.unitypackage
 unity/*.app
 unity/*.exe
 unity/WebGL-Build/
+unity/*.zip
 
 # Crashlytics generated file
 unity/crashlytics-build.properties
