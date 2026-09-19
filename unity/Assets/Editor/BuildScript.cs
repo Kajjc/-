@@ -31,5 +31,23 @@ namespace Arena.EditorTools
             if (report.summary.result != BuildResult.Succeeded)
                 throw new System.Exception($"WebGL build failed: {report.summary.result}, errors: {report.summary.totalErrors}");
         }
+
+        // Резервный запускаемый билд под Windows — на случай сбоев/недоступности
+        // публичного WebGL-хостинга (itch.io периодически подвисает, см.
+        // docs/roadmap.md), не требует браузера/сети.
+        public static void BuildWindows()
+        {
+            var scenes = EditorBuildSettingsScene.GetActiveSceneList(EditorBuildSettings.scenes);
+            var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+            {
+                scenes = scenes,
+                locationPathName = "Windows-Build/ArenaPeregovorov.exe",
+                target = BuildTarget.StandaloneWindows64,
+                options = BuildOptions.None
+            });
+
+            if (report.summary.result != BuildResult.Succeeded)
+                throw new System.Exception($"Windows build failed: {report.summary.result}, errors: {report.summary.totalErrors}");
+        }
     }
 }

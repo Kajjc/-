@@ -42,6 +42,7 @@ unity/*.unitypackage
 unity/*.app
 unity/*.exe
 unity/WebGL-Build/
+unity/Windows-Build/
 unity/*.zip
 
 # Crashlytics generated file
