@@ -11,6 +11,17 @@ namespace Arena.Dialogue
         public DialogueOption ChosenOption;
     }
 
+    // Гипотеза Ю7-вариант-А (docs/feature-hypotheses.md): видимая реакция оппонента
+    // на последнюю реплику игрока — без LLM и без новых полей в JSON сценариев,
+    // чисто по знаку/силе points только что выбранной опции.
+    public enum OpponentMood
+    {
+        Calm,
+        Pleased,
+        Wary,
+        Irritated
+    }
+
     // Обходит статичное дерево диалога: гейтит опции по навыкам игрока,
     // копит очки по тегам техник, ведёт транскрипт выбранных реплик для экрана фидбека.
     public class DialogueEngine
@@ -87,6 +98,19 @@ namespace Arena.Dialogue
             if (!nodesById.TryGetValue(option.next, out var nextNode))
                 throw new ArgumentException($"Узел '{option.next}', на который ссылается опция, не найден.");
             CurrentNode = nextNode;
+        }
+
+        // Реакция на только что сделанный ход игрока — по баллу последней выбранной
+        // опции. До первого хода (или на входе, до выбора) оппонент нейтрален.
+        public OpponentMood GetOpponentMood()
+        {
+            if (Transcript.Count == 0) return OpponentMood.Calm;
+
+            int lastPoints = Transcript[Transcript.Count - 1].ChosenOption.points;
+            if (lastPoints >= 2) return OpponentMood.Pleased;
+            if (lastPoints <= -2) return OpponentMood.Irritated;
+            if (lastPoints == -1) return OpponentMood.Wary;
+            return OpponentMood.Calm;
         }
     }
 }

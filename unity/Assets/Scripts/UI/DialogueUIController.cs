@@ -24,6 +24,8 @@ namespace Arena.UI
         private RectTransform portrait;
         private Image portraitImage;
         private GameObject portraitTint;
+        private Image moodBarImage;
+        private TMP_Text moodText;
         private TMP_Text opponentRoleText;
         private RectTransform pipsRow;
         private TMP_Text opponentText;
@@ -83,6 +85,23 @@ namespace Arena.UI
             portraitTintRect.offsetMin = Vector2.zero;
             portraitTintRect.offsetMax = Vector2.zero;
             portraitTint = portraitTintRect.gameObject;
+
+            // Гипотеза Ю7-вариант-А: цветная полоса + подпись настроения под портретом —
+            // тот же приём, что уже даёт AccentBar у карточек на экране выбора режима,
+            // без единого нового арт-ассета. Обновляется в Render() по GetOpponentMood().
+            var moodBarRect = Theme.CreatePanel(root, "MoodBar", Theme.Teal);
+            moodBarRect.anchorMin = new Vector2(0.05f, 0.795f);
+            moodBarRect.anchorMax = new Vector2(0.16f, 0.82f);
+            moodBarRect.offsetMin = Vector2.zero;
+            moodBarRect.offsetMax = Vector2.zero;
+            moodBarImage = moodBarRect.GetComponent<Image>();
+
+            moodText = Theme.CreateText(root, "MoodLabel", 14, TextAnchor.MiddleCenter, Theme.Teal);
+            var moodTextRect = moodText.rectTransform;
+            moodTextRect.anchorMin = new Vector2(0.05f, 0.75f);
+            moodTextRect.anchorMax = new Vector2(0.16f, 0.793f);
+            moodTextRect.offsetMin = Vector2.zero;
+            moodTextRect.offsetMax = Vector2.zero;
 
             opponentRoleText = Theme.CreateText(root, "OpponentRole", 20, TextAnchor.UpperLeft, Theme.Parchment);
             var roleRect = opponentRoleText.rectTransform;
@@ -223,6 +242,7 @@ namespace Arena.UI
             opponentRoleText.text = engine.Scenario.meta.opponentRole;
             opponentText.text = engine.CurrentNode.opponentLine;
             RenderPips();
+            RenderMood();
 
             // Гипотеза Ю1 (docs/feature-hypotheses.md): одна короткая строка перед
             // первым выбором, чтобы серые/заблокированные реплики не читались как
@@ -355,6 +375,40 @@ namespace Arena.UI
             AddPipGroup("Напор", "napor", engine.Skills.napor);
             AddPipGroup("Эмпатия", "empatiya", engine.Skills.empatiya);
             AddPipGroup("Логика", "logika", engine.Skills.logika);
+        }
+
+        // Гипотеза Ю7-вариант-А: видимая реакция оппонента на последний ход игрока
+        // (docs/feature-hypotheses.md). Полоса под портретом + короткая подпись,
+        // цвет — уже принятая в docs/visual-style-guide.md семантика (Sage=win,
+        // Amber=compromise, Coral=fail), без единого нового арт-ассета.
+        private void RenderMood()
+        {
+            var mood = engine.GetOpponentMood();
+            Color color;
+            string label;
+            switch (mood)
+            {
+                case OpponentMood.Pleased:
+                    color = Theme.Sage;
+                    label = "Доволен";
+                    break;
+                case OpponentMood.Wary:
+                    color = Theme.Amber;
+                    label = "Насторожен";
+                    break;
+                case OpponentMood.Irritated:
+                    color = Theme.Coral;
+                    label = "Раздражён";
+                    break;
+                default:
+                    color = Theme.Teal;
+                    label = "Спокоен";
+                    break;
+            }
+
+            moodBarImage.color = color;
+            moodText.color = color;
+            moodText.text = label;
         }
 
         private void AddPipGroup(string label, string skillId, int level)
