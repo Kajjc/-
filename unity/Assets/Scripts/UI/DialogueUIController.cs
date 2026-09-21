@@ -16,6 +16,12 @@ namespace Arena.UI
         private DialogueEngine engine;
         private Action onRequestNewScenario;
 
+        // Гипотеза Г8 (docs/feature-hypotheses.md): этот контроллер не пересоздаётся
+        // между "Пройти ещё раз"/"Другой сценарий" (только engine пересоздаётся в
+        // StartScenario), поэтому один и тот же профиль естественно копит данные по
+        // всем прогонам за сессию, без отдельного хранилища на уровне GameFlow.
+        private readonly NegotiatorProfile profile = new NegotiatorProfile();
+
         // Гипотеза Г5 (docs/feature-hypotheses.md) — экран итога передаёт сюда теги
         // техник, реально встретившихся в прохождении; связывает GameFlow.
         public Action<IEnumerable<string>> OnOpenTheory;
@@ -513,8 +519,13 @@ namespace Arena.UI
             AddSectionLabel("БАЛЛЫ ПО ТЕХНИКАМ");
             AddScoreChipsRow();
 
+            AddTechniqueTimelineSection();
+
             AddSectionLabel("ОБЩАЯ СТРАТЕГИЯ");
             AddPlainLine(BuildStrategyNarrative(byId), Theme.Parchment);
+
+            profile.RecordRun(engine.Skills, engine.TechniqueScores);
+            AddNegotiatorProfileSection(byId);
 
             AddSectionLabel("СИЛЬНЫЕ СТОРОНЫ");
             var strengths = SelectHighlights(wantStrengths: true, domainKey, byId);
@@ -546,10 +557,11 @@ namespace Arena.UI
             "position_push", "escalate", "personal_attack", "empty_threat", "vague_claim", "give_up"
         };
 
-        // Гипотеза Ю6 (docs/feature-hypotheses.md): не только теги+баллы, а один
-        // абзац о стратегии в целом — детерминированный шаблон по доле принципиальных
-        // vs позиционных техник за весь прогон (без LLM), усиливает уже сделанный Ю2.
-        private string BuildStrategyNarrative(Dictionary<string, TechniqueInfo> byId)
+        // Общий подсчёт для BuildStrategyNarrative (Ю6, один прогон) и
+        // BuildSessionProfileNarrative (Г8, сумма по всем прогонам сессии) —
+        // раньше эта логика была только внутри BuildStrategyNarrative.
+        private (string principledName, string positionalName, float principledShare, int total) AnalyzeTechniqueFamilies(
+            IReadOnlyDictionary<string, int> techniqueScores, Dictionary<string, TechniqueInfo> byId)
         {
             int principledSum = 0, positionalSum = 0;
             string topPrincipledId = null;
@@ -557,7 +569,7 @@ namespace Arena.UI
             string topPositionalId = null;
             int topPositionalScore = int.MaxValue;
 
-            foreach (var kv in engine.TechniqueScores)
+            foreach (var kv in techniqueScores)
             {
                 if (PrincipledTechniqueIds.Contains(kv.Key))
                 {
@@ -572,20 +584,144 @@ namespace Arena.UI
             }
 
             int total = principledSum + Mathf.Abs(positionalSum);
+            string principledName = topPrincipledId != null && byId.TryGetValue(topPrincipledId, out var pInfo) ? pInfo.ru_name : topPrincipledId;
+            string positionalName = topPositionalId != null && byId.TryGetValue(topPositionalId, out var nInfo) ? nInfo.ru_name : topPositionalId;
+            float principledShare = total == 0 ? 0f : principledSum / (float)total;
+            return (principledName, positionalName, principledShare, total);
+        }
+
+        // Гипотеза Ю6 (docs/feature-hypotheses.md): не только теги+баллы, а один
+        // абзац о стратегии в целом — детерминированный шаблон по доле принципиальных
+        // vs позиционных техник за весь прогон (без LLM), усиливает уже сделанный Ю2.
+        private string BuildStrategyNarrative(Dictionary<string, TechniqueInfo> byId)
+        {
+            var (principledName, positionalName, principledShare, total) = AnalyzeTechniqueFamilies(engine.TechniqueScores, byId);
             if (total == 0)
                 return "За это прохождение накопилось слишком мало данных для общего разбора стратегии — пройдите сценарий ещё раз.";
 
-            string PrincipledName() => byId.TryGetValue(topPrincipledId, out var info) ? info.ru_name : topPrincipledId;
-            string PositionalName() => byId.TryGetValue(topPositionalId, out var info) ? info.ru_name : topPositionalId;
-            float principledShare = principledSum / (float)total;
-
             if (principledShare >= 0.75f)
-                return $"В целом вы вели принципиальные переговоры (Fisher & Ury): опирались на интересы и объективные критерии, а не на давление. Сильнее всего сработала техника «{PrincipledName()}» — держите этот подход и в следующих раундах.";
+                return $"В целом вы вели принципиальные переговоры (Fisher & Ury): опирались на интересы и объективные критерии, а не на давление. Сильнее всего сработала техника «{principledName}» — держите этот подход и в следующих раундах.";
 
             if (principledShare <= 0.25f)
-                return $"В этом прохождении преобладал позиционный торг — чаще всего проявлялась «{PositionalName()}». По Гарвардскому методу такой подход обычно вредит отношениям и не даёт лучшего результата: попробуйте в следующий раз чаще опираться на объективные критерии и открытые вопросы.";
+                return $"В этом прохождении преобладал позиционный торг — чаще всего проявлялась «{positionalName}». По Гарвардскому методу такой подход обычно вредит отношениям и не даёт лучшего результата: попробуйте в следующий раз чаще опираться на объективные критерии и открытые вопросы.";
 
-            return $"Стратегия получилась смешанной: сильная сторона — «{PrincipledName()}», но эпизодами проявлялся позиционный паттерн «{PositionalName()}». Если убрать эти срывы, результат станет заметно увереннее.";
+            return $"Стратегия получилась смешанной: сильная сторона — «{principledName}», но эпизодами проявлялся позиционный паттерн «{positionalName}». Если убрать эти срывы, результат станет заметно увереннее.";
+        }
+
+        // Гипотеза Г8 (docs/feature-hypotheses.md): та же классификация техник, что
+        // и в Ю6, но по сумме за все прогоны сессии, а не за один раунд — показывает,
+        // устойчив ли стиль игрока или он сильно колеблется от сценария к сценарию.
+        private string BuildSessionProfileNarrative(Dictionary<string, TechniqueInfo> byId)
+        {
+            var (principledName, positionalName, principledShare, total) = AnalyzeTechniqueFamilies(profile.TechniqueScoresTotal, byId);
+            if (total == 0)
+                return "За эту сессию пока недостаточно данных о технике разговора.";
+
+            if (principledShare >= 0.75f)
+                return $"Во всех прогонах этой сессии вы устойчиво держитесь принципиальных переговоров — ярче всего это раскрыла техника «{principledName}».";
+
+            if (principledShare <= 0.25f)
+                return $"Во всех прогонах этой сессии преобладает позиционный торг — чаще всего это «{positionalName}». Стоит осознанно потренировать открытые вопросы и опору на объективные критерии.";
+
+            return $"За сессию стратегия колеблется: то принципиальный подход («{principledName}»), то позиционный откат («{positionalName}»).";
+        }
+
+        // Гипотеза Ю9 (docs/feature-hypotheses.md): цветная полоса-таймлайн техник
+        // по ходу разговора (та же классификация принципиальные/позиционные, что и
+        // в Ю6/Г8) вместо только суммарных баллов — видно, где именно в разговоре
+        // был провал или удача, а не только итоговый баланс.
+        private void AddTechniqueTimelineSection()
+        {
+            var steps = engine.Transcript.Where(s => !string.IsNullOrEmpty(s.ChosenOption.technique)).ToList();
+            if (steps.Count == 0) return;
+
+            AddSectionLabel("ДИНАМИКА ПО ХОДУ РАЗГОВОРА");
+
+            var rowGo = new GameObject("TechniqueTimeline", typeof(RectTransform));
+            rowGo.transform.SetParent(endContent, false);
+            var layout = rowGo.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 2;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            rowGo.AddComponent<LayoutElement>().minHeight = 16;
+
+            foreach (var step in steps)
+            {
+                Color segmentColor;
+                if (PrincipledTechniqueIds.Contains(step.ChosenOption.technique)) segmentColor = Theme.Sage;
+                else if (PositionalTechniqueIds.Contains(step.ChosenOption.technique)) segmentColor = Theme.Coral;
+                else segmentColor = Theme.Muted;
+                var segment = Theme.CreatePanel(rowGo.transform, "Segment", segmentColor);
+                segment.GetComponent<Image>().raycastTarget = false;
+            }
+
+            AddPlainLine("Слева направо — по порядку ходов. Зелёное — принципиальная техника, красное — позиционный торг.", Theme.EyebrowMuted);
+        }
+
+        // Гипотеза Г8 (docs/feature-hypotheses.md): накопленный профиль переговорщика
+        // за сессию — радар по трём навыкам (усреднённым по всем пройденным сценариям)
+        // + абзац о доминирующей семье техник за все прогоны. Показывается только
+        // начиная со 2-го завершённого сценария за сессию — на первом прогоне
+        // "накопленному" профилю ещё не из чего складываться.
+        private void AddNegotiatorProfileSection(Dictionary<string, TechniqueInfo> byId)
+        {
+            if (profile.RunCount < 2) return;
+
+            AddSectionLabel($"ПРОФИЛЬ ПЕРЕГОВОРЩИКА — ПРОЙДЕНО СЦЕНАРИЕВ: {profile.RunCount}");
+
+            var rowGo = new GameObject("ProfileRow", typeof(RectTransform));
+            rowGo.transform.SetParent(endContent, false);
+            var rowLayout = rowGo.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = 20;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowGo.AddComponent<LayoutElement>().minHeight = 190;
+
+            var radarWrapGo = new GameObject("Radar", typeof(RectTransform));
+            radarWrapGo.transform.SetParent(rowGo.transform, false);
+            var radarWrapLayout = radarWrapGo.AddComponent<LayoutElement>();
+            radarWrapLayout.minWidth = 190;
+            radarWrapLayout.minHeight = 190;
+
+            var chartGo = new GameObject("Chart", typeof(RectTransform));
+            chartGo.transform.SetParent(radarWrapGo.transform, false);
+            var chartRect = (RectTransform)chartGo.transform;
+            chartRect.anchorMin = new Vector2(0.1f, 0.22f);
+            chartRect.anchorMax = new Vector2(0.9f, 0.85f);
+            chartRect.offsetMin = Vector2.zero;
+            chartRect.offsetMax = Vector2.zero;
+            var chart = chartGo.AddComponent<RadarChart>();
+            chart.color = new Color(Theme.Teal.r, Theme.Teal.g, Theme.Teal.b, 0.55f);
+            chart.raycastTarget = false;
+
+            var (napor, empatiya, logika) = profile.AverageSkills();
+            chart.SetValues(napor, empatiya, logika);
+
+            AddRadarAxisLabel(radarWrapGo.transform, "Напор", new Vector2(0f, 0.85f), new Vector2(1f, 1f), TextAnchor.MiddleCenter);
+            AddRadarAxisLabel(radarWrapGo.transform, "Эмпатия", new Vector2(0f, 0f), new Vector2(0.5f, 0.22f), TextAnchor.LowerLeft);
+            AddRadarAxisLabel(radarWrapGo.transform, "Логика", new Vector2(0.5f, 0f), new Vector2(1f, 0.22f), TextAnchor.LowerRight);
+
+            var textGo = new GameObject("ProfileText", typeof(RectTransform));
+            textGo.transform.SetParent(rowGo.transform, false);
+            textGo.AddComponent<LayoutElement>().flexibleWidth = 1;
+            var text = Theme.CreateText(textGo.transform, "Text", 17, TextAnchor.UpperLeft, Theme.Parchment);
+            Theme.StretchFull(text.rectTransform);
+            text.text = BuildSessionProfileNarrative(byId);
+        }
+
+        private void AddRadarAxisLabel(Transform parent, string label, Vector2 anchorMin, Vector2 anchorMax, TextAnchor anchor)
+        {
+            var text = Theme.CreateText(parent, "AxisLabel", 13, anchor, Theme.EyebrowMuted);
+            text.text = label;
+            var rect = text.rectTransform;
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
         }
 
         // Гипотеза Ю2 (docs/feature-hypotheses.md), методология docs/eval-rubric.md §3.2:
