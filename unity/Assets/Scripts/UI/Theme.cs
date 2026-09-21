@@ -222,6 +222,51 @@ namespace Arena.UI
             }
         }
 
+        // Карточка-опция с акцентной полосой сверху, заголовком и подписью — общий
+        // вид для экранов выбора режима (ModeSelectController,
+        // TrainingModeSelectController). Раньше это был приватный метод только в
+        // ModeSelectController — вынесен сюда, когда появился второй экран с тем же
+        // видом карточек.
+        public static void CreateOptionCard(Transform parent, float anchorMinX, float anchorMaxX, float anchorMinY, float anchorMaxY,
+            string title, string subtitle, Color accent, UnityEngine.Events.UnityAction onClick)
+        {
+            var card = CreatePanel(parent, $"Option_{title}", new Color(Parchment.r, Parchment.g, Parchment.b, 0.05f));
+            card.anchorMin = new Vector2(anchorMinX, anchorMinY);
+            card.anchorMax = new Vector2(anchorMaxX, anchorMaxY);
+            card.offsetMin = Vector2.zero;
+            card.offsetMax = Vector2.zero;
+
+            var accentBar = CreatePanel(card, "AccentBar", accent);
+            accentBar.anchorMin = new Vector2(0f, 0.92f);
+            accentBar.anchorMax = new Vector2(1f, 1f);
+            accentBar.offsetMin = Vector2.zero;
+            accentBar.offsetMax = Vector2.zero;
+
+            var titleText = CreateText(card, "Title", 24, TextAnchor.UpperLeft, Parchment);
+            titleText.text = title;
+            var titleRect = titleText.rectTransform;
+            titleRect.anchorMin = new Vector2(0.08f, 0.7f);
+            titleRect.anchorMax = new Vector2(0.92f, 0.9f);
+            titleRect.offsetMin = Vector2.zero;
+            titleRect.offsetMax = Vector2.zero;
+
+            var subtitleText = CreateText(card, "Subtitle", 19, TextAnchor.UpperLeft, Muted);
+            subtitleText.text = subtitle;
+            var subtitleRect = subtitleText.rectTransform;
+            subtitleRect.anchorMin = new Vector2(0.08f, 0.1f);
+            subtitleRect.anchorMax = new Vector2(0.92f, 0.62f);
+            subtitleRect.offsetMin = Vector2.zero;
+            subtitleRect.offsetMax = Vector2.zero;
+
+            var button = card.gameObject.AddComponent<Button>();
+            button.targetGraphic = card.GetComponent<Image>();
+            var colors = button.colors;
+            colors.highlightedColor = new Color(1f, 1f, 1f, 0.94f);
+            colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+            button.colors = colors;
+            button.onClick.AddListener(onClick);
+        }
+
         private const float ScrollbarWidth = 10f;
         private const float ScrollbarGap = 6f;
 

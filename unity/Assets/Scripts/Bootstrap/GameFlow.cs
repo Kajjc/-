@@ -14,8 +14,15 @@ namespace Arena.Bootstrap
         private List<ScenarioData> library;
         private PlayerSkills playerSkills;
         private bool adminMode;
+        private GameMode gameMode = GameMode.Training;
+
+        // Пока ничем не отличается от Training по поведению — точка опоры для
+        // будущих обучающих функций, которые будут читать этот флаг оттуда, где
+        // появятся (диалог, экран итога и т.п.).
+        public GameMode CurrentGameMode => gameMode;
 
         private ModeSelectController modeSelect;
+        private TrainingModeSelectController trainingModeSelect;
         private SkillTestController skillTest;
         private AdminConfigController adminConfig;
         private DialogueUIController dialogue;
@@ -36,6 +43,7 @@ namespace Arena.Bootstrap
             }
 
             modeSelect = gameObject.AddComponent<ModeSelectController>();
+            trainingModeSelect = gameObject.AddComponent<TrainingModeSelectController>();
             skillTest = gameObject.AddComponent<SkillTestController>();
             adminConfig = gameObject.AddComponent<AdminConfigController>();
             dialogue = gameObject.AddComponent<DialogueUIController>();
@@ -50,6 +58,13 @@ namespace Arena.Bootstrap
         {
             adminMode = false;
             modeSelect.Hide();
+            trainingModeSelect.Show(OnGameModeChosen);
+        }
+
+        private void OnGameModeChosen(GameMode mode)
+        {
+            gameMode = mode;
+            trainingModeSelect.Hide();
             skillTest.Show(OnSkillsReadyFromTest);
         }
 
