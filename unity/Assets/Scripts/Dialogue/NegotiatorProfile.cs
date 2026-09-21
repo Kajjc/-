@@ -12,17 +12,28 @@ namespace Arena.Dialogue
     {
         private readonly List<PlayerSkills> runs = new List<PlayerSkills>();
         private readonly Dictionary<string, int> techniqueScoresTotal = new Dictionary<string, int>();
+        // Отдельно от очков — гипотеза "Профиль переговорщика (архетип)" считает
+        // архетип по ЧАСТОТЕ выбора техники, а не по сумме баллов, поэтому нужен
+        // отдельный счётчик количества выборов на каждый тег.
+        private readonly Dictionary<string, int> techniqueCountsTotal = new Dictionary<string, int>();
 
         public int RunCount => runs.Count;
         public IReadOnlyDictionary<string, int> TechniqueScoresTotal => techniqueScoresTotal;
+        public IReadOnlyDictionary<string, int> TechniqueCountsTotal => techniqueCountsTotal;
 
-        public void RecordRun(PlayerSkills skills, Dictionary<string, int> techniqueScores)
+        public void RecordRun(PlayerSkills skills, Dictionary<string, int> techniqueScores, IEnumerable<string> techniqueSequence)
         {
             runs.Add(skills);
             foreach (var kv in techniqueScores)
             {
                 techniqueScoresTotal.TryGetValue(kv.Key, out var current);
                 techniqueScoresTotal[kv.Key] = current + kv.Value;
+            }
+            foreach (var id in techniqueSequence)
+            {
+                if (string.IsNullOrEmpty(id)) continue;
+                techniqueCountsTotal.TryGetValue(id, out var current);
+                techniqueCountsTotal[id] = current + 1;
             }
         }
 

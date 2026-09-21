@@ -516,6 +516,8 @@ namespace Arena.UI
 
             Theme.CreateText(endContent, "Summary", 20, TextAnchor.UpperLeft, Theme.Muted).text = node.summary;
 
+            AddArchetypeSection(byId);
+
             AddSectionLabel("БАЛЛЫ ПО ТЕХНИКАМ");
             AddScoreChipsRow();
 
@@ -524,7 +526,7 @@ namespace Arena.UI
             AddSectionLabel("ОБЩАЯ СТРАТЕГИЯ");
             AddPlainLine(BuildStrategyNarrative(byId), Theme.Parchment);
 
-            profile.RecordRun(engine.Skills, engine.TechniqueScores);
+            profile.RecordRun(engine.Skills, engine.TechniqueScores, engine.Transcript.Select(s => s.ChosenOption.technique));
             AddNegotiatorProfileSection(byId);
 
             AddSectionLabel("СИЛЬНЫЕ СТОРОНЫ");
@@ -556,6 +558,129 @@ namespace Arena.UI
         {
             "position_push", "escalate", "personal_attack", "empty_threat", "vague_claim", "give_up"
         };
+
+        // Гипотеза "Профиль переговорщика (архетип)": та же таксономия из 15 техник,
+        // но перегруппирована по стилю поведения на 5 архетипов вместо 2 семей выше
+        // (принципиальные/позиционные — про качество аргументации, архетип — про
+        // манеру вести разговор). Архетип определяется по ЧАСТОТЕ выбора техники, а
+        // не по сумме баллов — так нагляднее для игрока ("5 раз уступил"), и разбиение
+        // на принципиальные/позиционные ещё и не мешает: обе семьи представлены и
+        // среди "хороших" архетипов (Аналитик/Дипломат/Стратег), и Уступчивый с
+        // Агрессором целиком состоят из позиционных техник.
+        private static readonly Dictionary<string, string> ArchetypeForTechnique = new Dictionary<string, string>
+        {
+            { "objective_criteria", "Аналитик" }, { "open_question", "Аналитик" },
+            { "batna_leverage", "Аналитик" }, { "recover", "Аналитик" },
+
+            { "state_interest", "Дипломат" }, { "active_listening", "Дипломат" },
+            { "de_escalate", "Дипломат" },
+
+            { "package_deal", "Стратег" }, { "anchor_with_flex", "Стратег" },
+
+            { "escalate", "Агрессор" }, { "personal_attack", "Агрессор" },
+            { "empty_threat", "Агрессор" }, { "position_push", "Агрессор" },
+
+            { "give_up", "Уступчивый" }, { "vague_claim", "Уступчивый" },
+        };
+
+        private static readonly Dictionary<string, string> ArchetypeDescription = new Dictionary<string, string>
+        {
+            { "Аналитик", "Вы опираетесь на факты, вопросы и реальные альтернативы — не на давление и не на уступки." },
+            { "Дипломат", "Вы называете интересы, слушаете оппонента и снимаете напряжение вместо того, чтобы спорить." },
+            { "Стратег", "Вы предпочитаете пакетные решения и якорение с гибкостью — не голый торг по одному пункту." },
+            { "Агрессор", "Вы чаще давите и повышаете напряжение, чем ищете компромисс." },
+            { "Уступчивый", "Вы чаще уступаете без встречного условия, чем отстаиваете свою позицию." },
+        };
+
+        // Если отрыв лидера от второго места меньше этой доли от всех тегированных
+        // выборов — называть один архетип было бы натяжкой, честнее показать
+        // "смешанный стиль".
+        private const float MixedArchetypeMarginShare = 0.15f;
+
+        private static (string archetype, int total) DetermineArchetype(IReadOnlyDictionary<string, int> techniqueCounts)
+        {
+            var bucketCounts = new Dictionary<string, int>();
+            int total = 0;
+            foreach (var kv in techniqueCounts)
+            {
+                if (!ArchetypeForTechnique.TryGetValue(kv.Key, out var archetype)) continue;
+                bucketCounts.TryGetValue(archetype, out var current);
+                bucketCounts[archetype] = current + kv.Value;
+                total += kv.Value;
+            }
+            if (total == 0) return (null, 0);
+
+            string best = null, second = null;
+            int bestCount = -1, secondCount = -1;
+            foreach (var kv in bucketCounts)
+            {
+                if (kv.Value > bestCount)
+                {
+                    second = best; secondCount = bestCount;
+                    best = kv.Key; bestCount = kv.Value;
+                }
+                else if (kv.Value > secondCount)
+                {
+                    second = kv.Key; secondCount = kv.Value;
+                }
+            }
+
+            if (second != null && (bestCount - secondCount) / (float)total < MixedArchetypeMarginShare)
+                return (null, total);
+
+            return (best, total);
+        }
+
+        // Архетип за один прогон — считается по engine.Transcript, показывается
+        // сразу после сводки исхода, до разбора по баллам: это самый "шарибельный"
+        // заголовочный результат экрана, поэтому стоит первым, а не в конце.
+        private void AddArchetypeSection(Dictionary<string, TechniqueInfo> byId)
+        {
+            var techniqueCounts = new Dictionary<string, int>();
+            foreach (var step in engine.Transcript)
+            {
+                var id = step.ChosenOption.technique;
+                if (string.IsNullOrEmpty(id)) continue;
+                techniqueCounts.TryGetValue(id, out var current);
+                techniqueCounts[id] = current + 1;
+            }
+
+            var (archetype, total) = DetermineArchetype(techniqueCounts);
+            if (total == 0) return;
+
+            AddSectionLabel("ПРОФИЛЬ ПЕРЕГОВОРЩИКА (АРХЕТИП)");
+
+            if (archetype == null)
+            {
+                AddPlainLine("Смешанный стиль — ни один архетип пока не преобладает явно.", Theme.Muted);
+                return;
+            }
+
+            var exampleStep = engine.Transcript
+                .Where(s => !string.IsNullOrEmpty(s.ChosenOption.technique)
+                    && ArchetypeForTechnique.TryGetValue(s.ChosenOption.technique, out var a) && a == archetype)
+                .OrderByDescending(s => Math.Abs(s.ChosenOption.points))
+                .FirstOrDefault();
+
+            var accent = exampleStep != null && exampleStep.ChosenOption.points > 0 ? Theme.Sage : Theme.Coral;
+
+            var badge = Theme.CreatePanel(endContent, "ArchetypeBadge", new Color(accent.r, accent.g, accent.b, 0.1f));
+            var badgeLayout = badge.gameObject.AddComponent<VerticalLayoutGroup>();
+            badgeLayout.padding = new RectOffset(16, 16, 10, 10);
+            badgeLayout.spacing = 4;
+            badgeLayout.childForceExpandWidth = true;
+            badgeLayout.childForceExpandHeight = false;
+            badgeLayout.childControlWidth = true;
+            badgeLayout.childControlHeight = true;
+            badge.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            Theme.CreateText(badge, "Name", 24, TextAnchor.UpperLeft, accent).text = archetype;
+            if (ArchetypeDescription.TryGetValue(archetype, out var description))
+                Theme.CreateText(badge, "Description", 17, TextAnchor.UpperLeft, Theme.Parchment).text = description;
+
+            if (exampleStep != null)
+                AddQuoteCard(exampleStep, byId, isStrength: exampleStep.ChosenOption.points > 0);
+        }
 
         // Общий подсчёт для BuildStrategyNarrative (Ю6, один прогон) и
         // BuildSessionProfileNarrative (Г8, сумма по всем прогонам сессии) —
@@ -710,7 +835,19 @@ namespace Arena.UI
             textGo.AddComponent<LayoutElement>().flexibleWidth = 1;
             var text = Theme.CreateText(textGo.transform, "Text", 17, TextAnchor.UpperLeft, Theme.Parchment);
             Theme.StretchFull(text.rectTransform);
-            text.text = BuildSessionProfileNarrative(byId);
+            text.text = BuildSessionArchetypeLine() + "\n\n" + BuildSessionProfileNarrative(byId);
+        }
+
+        // Тот же архетип, что и AddArchetypeSection, но по накопленной за сессию
+        // частоте техник (NegotiatorProfile.TechniqueCountsTotal) вместо одного
+        // прогона — стабильнее на нескольких сценариях подряд.
+        private string BuildSessionArchetypeLine()
+        {
+            var (archetype, total) = DetermineArchetype(profile.TechniqueCountsTotal);
+            if (total == 0) return "Архетип за сессию: пока недостаточно данных.";
+            return archetype == null
+                ? "Архетип за сессию: смешанный стиль."
+                : $"Архетип за сессию: «{archetype}».";
         }
 
         private void AddRadarAxisLabel(Transform parent, string label, Vector2 anchorMin, Vector2 anchorMax, TextAnchor anchor)
