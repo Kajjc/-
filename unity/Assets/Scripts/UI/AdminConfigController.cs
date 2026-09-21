@@ -24,6 +24,7 @@ namespace Arena.UI
         private static readonly string[] SkillLabels = { "Напор", "Эмпатия", "Логика" };
 
         private RectTransform root;
+        private RectTransform toneRow;
         private TMP_Text rolePreviewText;
         private TMP_Text scenarioPreviewText;
         private TMP_Text difficultyValueText;
@@ -59,6 +60,7 @@ namespace Arena.UI
             selectedDifficulty = library[0].meta.difficulty;
 
             BuildUiIfNeeded();
+            RebuildToneChips();
             root.gameObject.SetActive(true);
             if (showSkillEditor) UpdateSkillButtonsVisual();
             UpdateGameModeButtonsVisual();
@@ -104,6 +106,7 @@ namespace Arena.UI
                     var firstToneForSphere = library.FirstOrDefault(s => s.meta.sphere == selectedSphere)?.meta.tone;
                     if (firstToneForSphere != null) selectedTone = firstToneForSphere;
                 }
+                RebuildToneChips();
                 UpdatePreview();
             });
             y -= FieldStep;
@@ -114,12 +117,25 @@ namespace Arena.UI
 
             // Более высокая строка, чем у остальных чипов: "напористый / скептический"
             // при увеличенном шрифте переносится на 2 строки, и стандартных 0.06
-            // высоты не хватает — текст вылезал бы за пределы плашки чипа.
-            BuildChipRow("Тон собеседника", DistinctInOrder(library.Select(s => s.meta.tone)), y, toneChips, v =>
-            {
-                selectedTone = v;
-                UpdatePreview();
-            }, rowHeight: 0.1f);
+            // высоты не хватает — текст вылезал бы за пределы плашки чипа. Сами чипы
+            // не создаются здесь — только контейнер и подпись; набор тонов зависит от
+            // selectedSphere и пересобирается в RebuildToneChips (вызывается из Show()
+            // и при смене сферы), а не строится один раз на весь список тонов сразу.
+            BuildFieldLabel("ТОН СОБЕСЕДНИКА", y);
+            var toneRowGo = new GameObject("ТонСобеседникаRow", typeof(RectTransform));
+            toneRowGo.transform.SetParent(root, false);
+            toneRow = (RectTransform)toneRowGo.transform;
+            toneRow.anchorMin = new Vector2(0.06f, y);
+            toneRow.anchorMax = new Vector2(0.94f, y + 0.1f);
+            toneRow.offsetMin = Vector2.zero;
+            toneRow.offsetMax = Vector2.zero;
+            var toneLayout = toneRowGo.AddComponent<HorizontalLayoutGroup>();
+            toneLayout.spacing = 12;
+            toneLayout.childForceExpandWidth = false;
+            toneLayout.childForceExpandHeight = true;
+            toneLayout.childControlWidth = true;
+            toneLayout.childControlHeight = true;
+            toneLayout.childAlignment = TextAnchor.MiddleLeft;
 
             var previewStrip = Theme.CreatePanel(root, "PreviewStrip", new Color(Theme.Teal.r, Theme.Teal.g, Theme.Teal.b, 0.14f));
             previewStrip.anchorMin = new Vector2(0.06f, 0.06f);
@@ -334,6 +350,30 @@ namespace Arena.UI
             foreach (var (value, bg, txt) in registry)
                 Theme.SetChipSelected(bg, txt, value == selected);
             onSelect(selected);
+        }
+
+        // По просьбе пользователя (21.09): раньше список тонов строился один раз по
+        // всей библиотеке сразу, поэтому для сферы с одним тоном показывались ещё три
+        // чипа, которые ничего не меняли при клике (ScenarioLibrary.Pick всё равно
+        // откатывался на единственный существующий сценарий сферы). Теперь список
+        // всегда фильтруется по selectedSphere — сколько у сферы реально есть тонов,
+        // столько чипов и показывается.
+        private void RebuildToneChips()
+        {
+            foreach (Transform child in toneRow) Destroy(child.gameObject);
+            toneChips.Clear();
+
+            var tonesForSphere = DistinctInOrder(library.Where(s => s.meta.sphere == selectedSphere).Select(s => s.meta.tone));
+            foreach (var value in tonesForSphere)
+            {
+                var captured = value;
+                Theme.CreateChip(toneRow, value, () => SelectChip(toneChips, captured, v =>
+                {
+                    selectedTone = v;
+                    UpdatePreview();
+                }), out var bg, out var text);
+                toneChips.Add((value, bg, text));
+            }
         }
 
         private void BuildDifficultyRow(float y)
