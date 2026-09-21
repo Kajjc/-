@@ -33,7 +33,6 @@ namespace Arena.UI
         private RectTransform endPanel;
         private RectTransform outcomeBadge;
         private TMP_Text endTitleText;
-        private TMP_Text endSummaryText;
         private RectTransform endContent;
 
         // Гипотеза К2 (docs/feature-hypotheses.md): плавный fade между репликами
@@ -175,19 +174,18 @@ namespace Arena.UI
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            endSummaryText = Theme.CreateText(endPanel, "EndSummary", 20, TextAnchor.UpperLeft, Theme.Muted);
-            var summaryRect = endSummaryText.rectTransform;
-            summaryRect.anchorMin = new Vector2(0.06f, 0.74f);
-            summaryRect.anchorMax = new Vector2(0.94f, 0.83f);
-            summaryRect.offsetMin = Vector2.zero;
-            summaryRect.offsetMax = Vector2.zero;
-
-            // Единый прокручиваемый блок (баллы -> сильные стороны -> над чем
-            // поработать) вместо жёстких процентных зон — гипотеза Ю2
-            // (docs/feature-hypotheses.md), методология — docs/eval-rubric.md §3.2.
+            // Единый прокручиваемый блок (описание исхода -> баллы -> сильные
+            // стороны -> над чем поработать) вместо жёстких процентных зон —
+            // гипотеза Ю2 (docs/feature-hypotheses.md), методология —
+            // docs/eval-rubric.md §3.2. Раньше описание исхода (node.summary)
+            // рисовалось в отдельном блоке с фиксированной высотой на глаз —
+            // после углубления сценариев длинные сводки стали переполнять эту
+            // высоту и наезжать на разделы ниже (баллы по техникам и т.д.),
+            // которые сами не сдвигались. Теперь оно — первая строка того же
+            // прокручиваемого списка, высота считается автоматически.
             var scrollRoot = Theme.CreateScrollList(endPanel, "EndScroll", out endContent);
             scrollRoot.anchorMin = new Vector2(0.06f, 0.16f);
-            scrollRoot.anchorMax = new Vector2(0.94f, 0.72f);
+            scrollRoot.anchorMax = new Vector2(0.94f, 0.82f);
             scrollRoot.offsetMin = Vector2.zero;
             scrollRoot.offsetMax = Vector2.zero;
 
@@ -502,7 +500,6 @@ namespace Arena.UI
             var node = engine.CurrentNode;
             outcomeBadge.GetComponent<Image>().color = Theme.ForOutcome(node.outcome);
             endTitleText.text = OutcomeTitle(node.outcome);
-            endSummaryText.text = node.summary;
 
             foreach (Transform child in endContent) Destroy(child.gameObject);
 
@@ -510,6 +507,8 @@ namespace Arena.UI
             var byId = new Dictionary<string, TechniqueInfo>();
             foreach (var t in taxonomy.techniques) byId[t.id] = t;
             var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere);
+
+            Theme.CreateText(endContent, "Summary", 20, TextAnchor.UpperLeft, Theme.Muted).text = node.summary;
 
             AddSectionLabel("БАЛЛЫ ПО ТЕХНИКАМ");
             AddScoreChipsRow();
