@@ -16,10 +16,14 @@ namespace Arena.Dialogue
         // архетип по ЧАСТОТЕ выбора техники, а не по сумме баллов, поэтому нужен
         // отдельный счётчик количества выборов на каждый тег.
         private readonly Dictionary<string, int> techniqueCountsTotal = new Dictionary<string, int>();
+        // Идея "Микро-достижения (бейджи)": каждый бейдж показывается как "новый"
+        // только один раз за сессию — здесь хранится, какие уже были показаны.
+        private readonly HashSet<string> unlockedBadgeIds = new HashSet<string>();
 
         public int RunCount => runs.Count;
         public IReadOnlyDictionary<string, int> TechniqueScoresTotal => techniqueScoresTotal;
         public IReadOnlyDictionary<string, int> TechniqueCountsTotal => techniqueCountsTotal;
+        public HashSet<string> UnlockedBadgeIds => unlockedBadgeIds;
 
         public void RecordRun(PlayerSkills skills, Dictionary<string, int> techniqueScores, IEnumerable<string> techniqueSequence)
         {

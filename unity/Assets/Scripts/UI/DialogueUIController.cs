@@ -514,9 +514,17 @@ namespace Arena.UI
             foreach (var t in taxonomy.techniques) byId[t.id] = t;
             var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere);
 
+            // Бейджу "Повтор" и остальным достижениям нужен уже обновлённый
+            // NegotiatorProfile (в частности RunCount, включающий этот прогон) —
+            // поэтому запись в профиль перенесена в самое начало, до рендера, и
+            // выполняется ДО оценки бейджей (а не после, как раньше в этом методе).
+            profile.RecordRun(engine.Skills, engine.TechniqueScores, engine.Transcript.Select(s => s.ChosenOption.technique));
+            var newlyEarnedBadges = EvaluateNewlyEarnedBadges();
+
             Theme.CreateText(endContent, "Summary", 20, TextAnchor.UpperLeft, Theme.Muted).text = node.summary;
 
             AddArchetypeSection(byId);
+            AddBadgesSection(newlyEarnedBadges);
 
             AddSectionLabel("БАЛЛЫ ПО ТЕХНИКАМ");
             AddScoreChipsRow();
@@ -526,7 +534,6 @@ namespace Arena.UI
             AddSectionLabel("ОБЩАЯ СТРАТЕГИЯ");
             AddPlainLine(BuildStrategyNarrative(byId), Theme.Parchment);
 
-            profile.RecordRun(engine.Skills, engine.TechniqueScores, engine.Transcript.Select(s => s.ChosenOption.technique));
             AddNegotiatorProfileSection(byId);
 
             AddSectionLabel("СИЛЬНЫЕ СТОРОНЫ");
@@ -680,6 +687,124 @@ namespace Arena.UI
 
             if (exampleStep != null)
                 AddQuoteCard(exampleStep, byId, isStrength: exampleStep.ChosenOption.points > 0);
+        }
+
+        // Идея "Микро-достижения (бейджи)": маленькие разовые награды поверх уже
+        // существующих данных (Transcript/TechniqueScores/NegotiatorProfile) — не
+        // новая механика подсчёта, а другой взгляд на те же самые числа. Каждый
+        // бейдж показывается только один раз за сессию (см. NegotiatorProfile.
+        // UnlockedBadgeIds), а не при каждом повторном выполнении условия.
+        private class BadgeDefinition
+        {
+            public string Id;
+            public string Name;
+            public string Description;
+        }
+
+        private static readonly List<BadgeDefinition> BadgeDefinitions = new List<BadgeDefinition>
+        {
+            new BadgeDefinition { Id = "first_deal", Name = "Первая сделка", Description = "Успешно завершили переговоры — впервые за эту сессию." },
+            new BadgeDefinition { Id = "listener", Name = "Слушатель", Description = "Задали 3 и более открытых вопроса за один разговор." },
+            new BadgeDefinition { Id = "firm", Name = "Твёрдый", Description = "Ни разу не уступили без встречного условия." },
+            new BadgeDefinition { Id = "explorer", Name = "Исследователь", Description = "Использовали реплику, доступную только при прокачанном навыке." },
+            new BadgeDefinition { Id = "persistent", Name = "Повтор", Description = "Прошли третий сценарий за эту сессию." },
+        };
+
+        // Вызывается после profile.RecordRun(...) — RunCount должен уже включать
+        // этот прогон, иначе "Повтор" сработает на ходу позже, чем должен.
+        private List<string> EvaluateNewlyEarnedBadges()
+        {
+            var earned = new List<string>();
+
+            bool IsNew(string id) => !profile.UnlockedBadgeIds.Contains(id);
+
+            if (engine.CurrentNode.outcome == "win" && IsNew("first_deal"))
+                earned.Add("first_deal");
+
+            int openQuestionCount = engine.Transcript.Count(s => s.ChosenOption.technique == "open_question");
+            if (openQuestionCount >= 3 && IsNew("listener"))
+                earned.Add("listener");
+
+            int taggedCount = engine.Transcript.Count(s => !string.IsNullOrEmpty(s.ChosenOption.technique));
+            bool neverGaveUp = !engine.Transcript.Any(s => s.ChosenOption.technique == "give_up");
+            if (taggedCount >= 5 && neverGaveUp && IsNew("firm"))
+                earned.Add("firm");
+
+            bool usedGatedOption = engine.Transcript.Any(s => s.ChosenOption.requiredSkills != null && s.ChosenOption.requiredSkills.Length > 0);
+            if (usedGatedOption && IsNew("explorer"))
+                earned.Add("explorer");
+
+            if (profile.RunCount >= 3 && IsNew("persistent"))
+                earned.Add("persistent");
+
+            foreach (var id in earned) profile.UnlockedBadgeIds.Add(id);
+            return earned;
+        }
+
+        private void AddBadgesSection(List<string> earnedBadgeIds)
+        {
+            if (earnedBadgeIds.Count == 0) return;
+
+            AddSectionLabel("НОВЫЕ ДОСТИЖЕНИЯ");
+
+            var rowGo = new GameObject("BadgesRow", typeof(RectTransform));
+            rowGo.transform.SetParent(endContent, false);
+            var grid = rowGo.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(240, 90);
+            grid.spacing = new Vector2(12, 12);
+            grid.childAlignment = TextAnchor.MiddleLeft;
+            grid.constraint = GridLayoutGroup.Constraint.Flexible;
+            rowGo.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            foreach (var id in earnedBadgeIds)
+            {
+                var def = BadgeDefinitions.FirstOrDefault(b => b.Id == id);
+                if (def != null) AddBadgeCard(rowGo.transform, def);
+            }
+        }
+
+        // Гипотеза "Микро-достижения": иконка — Resources/Icons/badge_<id>.png,
+        // пока схематичная Pillow-заглушка (та же идея, что портреты настроения
+        // Ю7) — если файла нет, просто остаётся цветной квадрат-плейсхолдер.
+        private void AddBadgeCard(Transform parent, BadgeDefinition def)
+        {
+            var card = Theme.CreatePanel(parent, $"Badge_{def.Id}", new Color(Theme.Amber.r, Theme.Amber.g, Theme.Amber.b, 0.12f));
+            var layout = card.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.padding = new RectOffset(10, 10, 8, 8);
+            layout.spacing = 10;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = true;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+
+            var iconGo = new GameObject("Icon", typeof(RectTransform));
+            iconGo.transform.SetParent(card, false);
+            iconGo.AddComponent<LayoutElement>().minWidth = 40;
+            var iconImage = iconGo.AddComponent<Image>();
+            var sprite = Theme.TryLoadSprite($"Icons/badge_{def.Id}");
+            if (sprite != null)
+            {
+                iconImage.sprite = sprite;
+                iconImage.color = Color.white;
+            }
+            else
+            {
+                iconImage.color = new Color(Theme.Amber.r, Theme.Amber.g, Theme.Amber.b, 0.4f);
+            }
+
+            var textGo = new GameObject("Text", typeof(RectTransform));
+            textGo.transform.SetParent(card, false);
+            textGo.AddComponent<LayoutElement>().flexibleWidth = 1;
+            var textLayout = textGo.AddComponent<VerticalLayoutGroup>();
+            textLayout.childForceExpandWidth = true;
+            textLayout.childForceExpandHeight = false;
+            textLayout.childControlWidth = true;
+            textLayout.childControlHeight = true;
+            textLayout.childAlignment = TextAnchor.MiddleLeft;
+
+            Theme.CreateText(textGo.transform, "Name", 16, TextAnchor.UpperLeft, Theme.Amber).text = def.Name;
+            Theme.CreateText(textGo.transform, "Description", 13, TextAnchor.UpperLeft, Theme.Muted).text = def.Description;
         }
 
         // Общий подсчёт для BuildStrategyNarrative (Ю6, один прогон) и
