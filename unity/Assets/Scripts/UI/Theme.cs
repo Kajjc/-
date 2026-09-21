@@ -113,7 +113,57 @@ namespace Arena.UI
             var root = (RectTransform)canvasGo.transform;
             var background = CreatePanel(root, "Background", Navy);
             StretchFull(background);
+
+            CreateQuitButton(root);
+
             return root;
+        }
+
+        // Кнопка выхода в правом верхнем углу — добавляется сюда, а не в каждый
+        // контроллер по отдельности, поэтому появляется на любом экране (все они
+        // создают свой Canvas через CreateCanvas). В WebGL Application.Quit ничего
+        // не делает — браузер не даёт странице закрыть саму себя — поэтому там
+        // кнопка не создаётся вообще, а не показывается нерабочей.
+        //
+        // Маленький квадрат строго в углу (28x28, отступ 8px) — почти на всех
+        // экранах у самого верхнего правого края уже что-то есть (пипсы навыков в
+        // диалоге до x=0.95, счётчик вопроса в тесте навыков и "← Назад" в теории
+        // до x=0.94/y=0.97) — компактный размер и минимальный отступ гарантируют,
+        // что кнопка не перекрывает ни один из них. Подпись "X" — обычная ASCII-
+        // буква, а не символ "×": кастомный TMP-шрифт проекта собран только из
+        // Basic Latin + кириллицы (см. TmpFontBuilder.cs, урок К1), символа
+        // умножения в нём может не быть.
+        private static void CreateQuitButton(RectTransform canvasRoot)
+        {
+            if (Application.platform == RuntimePlatform.WebGLPlayer) return;
+
+            var buttonRect = CreatePanel(canvasRoot, "QuitButton", new Color(Coral.r, Coral.g, Coral.b, 0.85f));
+            buttonRect.anchorMin = new Vector2(1f, 1f);
+            buttonRect.anchorMax = new Vector2(1f, 1f);
+            buttonRect.pivot = new Vector2(1f, 1f);
+            buttonRect.sizeDelta = new Vector2(28, 28);
+            buttonRect.anchoredPosition = new Vector2(-8, -8);
+
+            var button = buttonRect.gameObject.AddComponent<Button>();
+            button.targetGraphic = buttonRect.GetComponent<Image>();
+            var colors = button.colors;
+            colors.highlightedColor = new Color(1f, 1f, 1f, 0.92f);
+            colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+            button.colors = colors;
+            button.onClick.AddListener(QuitGame);
+
+            var label = CreateText(buttonRect, "Label", 16, TextAnchor.MiddleCenter, Parchment);
+            StretchFull(label.rectTransform);
+            label.text = "X";
+        }
+
+        public static void QuitGame()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         public static RectTransform CreatePanel(Transform parent, string name, Color color)
