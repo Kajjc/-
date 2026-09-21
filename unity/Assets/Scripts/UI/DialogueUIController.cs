@@ -56,7 +56,7 @@ namespace Arena.UI
             engine = new DialogueEngine(scenario, skills);
             BuildUiIfNeeded();
             root.gameObject.SetActive(true);
-            UpdatePortraitAndBackground();
+            UpdateBackground();
             Render();
         }
 
@@ -347,20 +347,32 @@ namespace Arena.UI
             levelText.text = $"≥{requirement.level}";
         }
 
-        // Ищет Resources/Portraits/<id>.png и Resources/Backgrounds/<id>.png по id
-        // текущего сценария (docs/team-plan.md фиксирует эту конвенцию имён для
-        // участника команды, который генерирует ассеты) — если файла нет, остаётся
-        // текущая плашка-заглушка, ничего не ломается.
-        private void UpdatePortraitAndBackground()
+        // Ищет Resources/Backgrounds/<id>.png по домену текущего сценария
+        // (docs/team-plan.md фиксирует конвенцию имён) — если файла нет, остаётся
+        // сплошной Navy, ничего не ломается. Портрет теперь обновляется отдельно,
+        // на каждом ходу, — см. UpdatePortraitSprite (зависит от настроения).
+        private void UpdateBackground()
         {
             // По домену (сфере), а не по конкретному сценарию: с Г2 на каждый домен
             // приходится 3 сценария (лёгкий/средний/сложный) с одним и тем же
             // персонажем/обстановкой — незачем просить команду рисовать 3x ассетов.
             var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere) ?? engine.Scenario.meta.id;
-            var portraitSprite = Theme.TryLoadSprite($"Portraits/{domainKey}");
-            if (portraitSprite != null)
+            Theme.SetCanvasBackground(root, $"Backgrounds/{domainKey}");
+        }
+
+        // Гипотеза Ю7: портрет по настроению (Resources/Portraits/<домен>_<настроение>.png,
+        // например hr_irritated.png) — пока нарисованы схематичные плейсхолдеры только для
+        // HR, на остальные домены откатывается на прежний нейтральный Portraits/<домен>.png,
+        // а если и его нет — на плашку-заглушку. Ничего не ломается по мере добавления
+        // реальных ассетов постепенно, домен за доменом.
+        private void UpdatePortraitSprite(string moodSuffix)
+        {
+            var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere) ?? engine.Scenario.meta.id;
+            var sprite = Theme.TryLoadSprite($"Portraits/{domainKey}_{moodSuffix}")
+                ?? Theme.TryLoadSprite($"Portraits/{domainKey}");
+            if (sprite != null)
             {
-                portraitImage.sprite = portraitSprite;
+                portraitImage.sprite = sprite;
                 portraitImage.color = Color.white;
                 portraitTint.SetActive(false);
             }
@@ -370,8 +382,6 @@ namespace Arena.UI
                 portraitImage.color = Theme.Slate;
                 portraitTint.SetActive(true);
             }
-
-            Theme.SetCanvasBackground(root, $"Backgrounds/{domainKey}");
         }
 
         private void RenderPips()
@@ -393,29 +403,35 @@ namespace Arena.UI
             var mood = engine.GetOpponentMood();
             Color color;
             string label;
+            string moodSuffix;
             switch (mood)
             {
                 case OpponentMood.Pleased:
                     color = Theme.Sage;
                     label = "Доволен";
+                    moodSuffix = "pleased";
                     break;
                 case OpponentMood.Wary:
                     color = Theme.Amber;
                     label = "Насторожен";
+                    moodSuffix = "wary";
                     break;
                 case OpponentMood.Irritated:
                     color = Theme.Coral;
                     label = "Раздражён";
+                    moodSuffix = "irritated";
                     break;
                 default:
                     color = Theme.Teal;
                     label = "Спокоен";
+                    moodSuffix = "calm";
                     break;
             }
 
             moodBarImage.color = color;
             moodText.color = color;
             moodText.text = label;
+            UpdatePortraitSprite(moodSuffix);
         }
 
         private void AddPipGroup(string label, string skillId, int level)
