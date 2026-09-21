@@ -222,11 +222,8 @@ namespace Arena.UI
             }
         }
 
-        // Карточка-опция с акцентной полосой сверху, заголовком и подписью — общий
-        // вид для экранов выбора режима (ModeSelectController,
-        // TrainingModeSelectController). Раньше это был приватный метод только в
-        // ModeSelectController — вынесен сюда, когда появился второй экран с тем же
-        // видом карточек.
+        // Карточка-опция с акцентной полосой сверху, заголовком и подписью —
+        // вид карточек на экране выбора режима (ModeSelectController).
         public static void CreateOptionCard(Transform parent, float anchorMinX, float anchorMaxX, float anchorMinY, float anchorMaxY,
             string title, string subtitle, Color accent, UnityEngine.Events.UnityAction onClick)
         {

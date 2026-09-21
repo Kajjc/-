@@ -22,7 +22,6 @@ namespace Arena.Bootstrap
         public GameMode CurrentGameMode => gameMode;
 
         private ModeSelectController modeSelect;
-        private TrainingModeSelectController trainingModeSelect;
         private SkillTestController skillTest;
         private AdminConfigController adminConfig;
         private DialogueUIController dialogue;
@@ -43,7 +42,6 @@ namespace Arena.Bootstrap
             }
 
             modeSelect = gameObject.AddComponent<ModeSelectController>();
-            trainingModeSelect = gameObject.AddComponent<TrainingModeSelectController>();
             skillTest = gameObject.AddComponent<SkillTestController>();
             adminConfig = gameObject.AddComponent<AdminConfigController>();
             dialogue = gameObject.AddComponent<DialogueUIController>();
@@ -58,13 +56,6 @@ namespace Arena.Bootstrap
         {
             adminMode = false;
             modeSelect.Hide();
-            trainingModeSelect.Show(OnGameModeChosen);
-        }
-
-        private void OnGameModeChosen(GameMode mode)
-        {
-            gameMode = mode;
-            trainingModeSelect.Hide();
             skillTest.Show(OnSkillsReadyFromTest);
         }
 
@@ -72,24 +63,25 @@ namespace Arena.Bootstrap
         {
             adminMode = true;
             modeSelect.Hide();
-            adminConfig.Show(library, new PlayerSkills(), showSkillEditor: true, OnConfigConfirmed);
+            adminConfig.Show(library, new PlayerSkills(), showSkillEditor: true, gameMode, OnConfigConfirmed);
         }
 
         private void OnSkillsReadyFromTest(PlayerSkills skills)
         {
             playerSkills = skills;
-            adminConfig.Show(library, playerSkills, showSkillEditor: false, OnConfigConfirmed);
+            adminConfig.Show(library, playerSkills, showSkillEditor: false, gameMode, OnConfigConfirmed);
         }
 
-        private void OnConfigConfirmed(ScenarioData scenario, PlayerSkills skills)
+        private void OnConfigConfirmed(ScenarioData scenario, PlayerSkills skills, GameMode mode)
         {
             playerSkills = skills;
+            gameMode = mode;
             dialogue.StartScenario(scenario, playerSkills, OnRequestNewScenario);
         }
 
         private void OnRequestNewScenario()
         {
-            adminConfig.Show(library, playerSkills, showSkillEditor: adminMode, OnConfigConfirmed);
+            adminConfig.Show(library, playerSkills, showSkillEditor: adminMode, gameMode, OnConfigConfirmed);
         }
 
         // К4 (docs/feature-hypotheses.md): любое фатальное состояние на старте

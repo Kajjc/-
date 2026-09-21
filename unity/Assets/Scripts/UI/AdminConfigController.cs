@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Arena.Bootstrap;
 using Arena.Dialogue;
 using TMPro;
 using UnityEngine;
@@ -31,6 +32,7 @@ namespace Arena.UI
         private readonly List<(string value, Image bg, TMP_Text txt)> toneChips = new List<(string, Image, TMP_Text)>();
         private readonly List<Image> difficultyDots = new List<Image>();
         private readonly Dictionary<string, List<(int level, Image bg, TMP_Text txt)>> skillButtons = new Dictionary<string, List<(int, Image, TMP_Text)>>();
+        private readonly List<(GameMode mode, Image bg, TMP_Text txt)> gameModeButtons = new List<(GameMode, Image, TMP_Text)>();
 
         private List<ScenarioData> library;
         private bool showSkillEditor;
@@ -38,17 +40,19 @@ namespace Arena.UI
         private string selectedSphere;
         private string selectedTone;
         private int selectedDifficulty;
+        private GameMode selectedGameMode;
         private ScenarioData previewScenario;
-        private Action<ScenarioData, PlayerSkills> onConfirmed;
+        private Action<ScenarioData, PlayerSkills, GameMode> onConfirmed;
 
         public GameObject Root => root != null ? root.gameObject : null;
 
-        public void Show(List<ScenarioData> library, PlayerSkills skills, bool showSkillEditor, Action<ScenarioData, PlayerSkills> onConfirmed)
+        public void Show(List<ScenarioData> library, PlayerSkills skills, bool showSkillEditor, GameMode initialGameMode, Action<ScenarioData, PlayerSkills, GameMode> onConfirmed)
         {
             this.library = library;
             this.showSkillEditor = showSkillEditor;
             this.onConfirmed = onConfirmed;
             workingSkills = new PlayerSkills { napor = skills.napor, empatiya = skills.empatiya, logika = skills.logika };
+            selectedGameMode = initialGameMode;
 
             selectedSphere = library[0].meta.sphere;
             selectedTone = library[0].meta.tone;
@@ -57,6 +61,7 @@ namespace Arena.UI
             BuildUiIfNeeded();
             root.gameObject.SetActive(true);
             if (showSkillEditor) UpdateSkillButtonsVisual();
+            UpdateGameModeButtonsVisual();
             UpdatePreview();
         }
 
@@ -104,6 +109,7 @@ namespace Arena.UI
             y -= FieldStep;
 
             BuildDifficultyRow(y);
+            BuildGameModeRow(y);
             y -= FieldStep;
 
             // Более высокая строка, чем у остальных чипов: "напористый / скептический"
@@ -228,15 +234,72 @@ namespace Arena.UI
             }
         }
 
-        private void BuildFieldLabel(string label, float y)
+        private void BuildFieldLabel(string label, float y, float anchorMinX = 0.06f, float anchorMaxX = 0.7f)
         {
             var labelText = Theme.CreateText(root, $"{label}Label", 16, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
             labelText.text = label;
             var labelRect = labelText.rectTransform;
-            labelRect.anchorMin = new Vector2(0.06f, y + 0.065f);
-            labelRect.anchorMax = new Vector2(0.7f, y + 0.11f);
+            labelRect.anchorMin = new Vector2(anchorMinX, y + 0.065f);
+            labelRect.anchorMax = new Vector2(anchorMaxX, y + 0.11f);
             labelRect.offsetMin = Vector2.zero;
             labelRect.offsetMax = Vector2.zero;
+        }
+
+        // Пользователь попросил разместить переключатель "Тренировка/Обучение"
+        // именно на этом экране, в свободном месте справа от "СЛОЖНОСТЬ" (было
+        // изначально сделано отдельным экраном перед тестом навыков, но это не
+        // подошло — переключатель нужен здесь, на экране настройки кейса, где он
+        // виден и админу, и обычному игроку после теста). Пока оба варианта ведут
+        // по одинаковому пути — переключатель только запоминает выбор в GameFlow
+        // через onConfirmed, реальная разница в поведении добавится позже.
+        private void BuildGameModeRow(float y)
+        {
+            BuildFieldLabel("РЕЖИМ", y, anchorMinX: 0.73f, anchorMaxX: 0.94f);
+
+            var rowGo = new GameObject("GameModeRow", typeof(RectTransform));
+            rowGo.transform.SetParent(root, false);
+            var row = (RectTransform)rowGo.transform;
+            row.anchorMin = new Vector2(0.73f, y);
+            row.anchorMax = new Vector2(0.94f, y + 0.06f);
+            row.offsetMin = Vector2.zero;
+            row.offsetMax = Vector2.zero;
+            var layout = rowGo.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 6;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+
+            AddGameModeButton(rowGo.transform, "Тренировка", GameMode.Training);
+            AddGameModeButton(rowGo.transform, "Обучение", GameMode.Learning);
+        }
+
+        private void AddGameModeButton(Transform parent, string label, GameMode mode)
+        {
+            var go = new GameObject($"Mode_{mode}", typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var bg = go.AddComponent<Image>();
+            var button = go.AddComponent<Button>();
+            button.targetGraphic = bg;
+            button.onClick.AddListener(() =>
+            {
+                selectedGameMode = mode;
+                UpdateGameModeButtonsVisual();
+            });
+            var text = Theme.CreateText(go.transform, "Label", 15, TextAnchor.MiddleCenter, Theme.Parchment);
+            text.text = label;
+            Theme.StretchFull(text.rectTransform);
+            gameModeButtons.Add((mode, bg, text));
+        }
+
+        private void UpdateGameModeButtonsVisual()
+        {
+            foreach (var (mode, bg, txt) in gameModeButtons)
+            {
+                bool selected = mode == selectedGameMode;
+                bg.color = selected ? Theme.Amber : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.08f);
+                txt.color = selected ? Theme.Navy : Theme.Parchment;
+            }
         }
 
         private void BuildChipRow(string label, List<string> values, float y, List<(string, Image, TMP_Text)> registry, Action<string> onSelect, float rowHeight = 0.06f)
@@ -342,7 +405,7 @@ namespace Arena.UI
         {
             if (previewScenario == null) return;
             Hide();
-            onConfirmed?.Invoke(previewScenario, workingSkills);
+            onConfirmed?.Invoke(previewScenario, workingSkills, selectedGameMode);
         }
 
         private static List<string> DistinctInOrder(IEnumerable<string> values)
