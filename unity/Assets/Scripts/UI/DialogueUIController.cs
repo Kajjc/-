@@ -86,20 +86,27 @@ namespace Arena.UI
             portraitTintRect.offsetMax = Vector2.zero;
             portraitTint = portraitTintRect.gameObject;
 
-            // Гипотеза Ю7-вариант-А: цветная полоса + подпись настроения под портретом —
-            // тот же приём, что уже даёт AccentBar у карточек на экране выбора режима,
-            // без единого нового арт-ассета. Обновляется в Render() по GetOpponentMood().
-            var moodBarRect = Theme.CreatePanel(root, "MoodBar", Theme.Teal);
-            moodBarRect.anchorMin = new Vector2(0.05f, 0.795f);
-            moodBarRect.anchorMax = new Vector2(0.16f, 0.82f);
+            // Гипотеза Ю7-вариант-А: акцентная полоса поверх нижнего края портрета
+            // (тот же приём, что AccentBar у карточек на экране выбора режима) +
+            // короткая подпись под именем роли. Обновляется в Render() по
+            // GetOpponentMood(). Полоса — ребёнок portrait (не root), в его же
+            // локальных координатах, поэтому не зависит от того, есть ли уже
+            // настоящий арт портрета — виден он и на плашке-заглушке, и поверх
+            // реального изображения; подпись — в свободном промежутке между
+            // именем роли и репликой оппонента, а не под портретом (там места
+            // впритык — первая строка реплики перекрывала бы её, что и
+            // обнаружилось на скриншоте живого прогона).
+            var moodBarRect = Theme.CreatePanel(portrait, "MoodBar", Theme.Teal);
+            moodBarRect.anchorMin = new Vector2(0f, 0f);
+            moodBarRect.anchorMax = new Vector2(1f, 0.1f);
             moodBarRect.offsetMin = Vector2.zero;
             moodBarRect.offsetMax = Vector2.zero;
             moodBarImage = moodBarRect.GetComponent<Image>();
 
-            moodText = Theme.CreateText(root, "MoodLabel", 14, TextAnchor.MiddleCenter, Theme.Teal);
+            moodText = Theme.CreateText(root, "MoodLabel", 15, TextAnchor.MiddleLeft, Theme.Teal);
             var moodTextRect = moodText.rectTransform;
-            moodTextRect.anchorMin = new Vector2(0.05f, 0.75f);
-            moodTextRect.anchorMax = new Vector2(0.16f, 0.793f);
+            moodTextRect.anchorMin = new Vector2(0.18f, 0.8f);
+            moodTextRect.anchorMax = new Vector2(0.6f, 0.855f);
             moodTextRect.offsetMin = Vector2.zero;
             moodTextRect.offsetMax = Vector2.zero;
 
