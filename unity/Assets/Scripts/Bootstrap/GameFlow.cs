@@ -21,6 +21,7 @@ namespace Arena.Bootstrap
 
         private ModeSelectController modeSelect;
         private SkillTestController skillTest;
+        private TestResultController testResult;
         private AdminConfigController adminConfig;
         private DialogueUIController dialogue;
         private TheoryController theory;
@@ -37,6 +38,7 @@ namespace Arena.Bootstrap
 
             modeSelect = gameObject.AddComponent<ModeSelectController>();
             skillTest = gameObject.AddComponent<SkillTestController>();
+            testResult = gameObject.AddComponent<TestResultController>();
             adminConfig = gameObject.AddComponent<AdminConfigController>();
             dialogue = gameObject.AddComponent<DialogueUIController>();
             theory = gameObject.AddComponent<TheoryController>();
@@ -51,6 +53,7 @@ namespace Arena.Bootstrap
         {
             skillTest.Hide();
             adminConfig.Hide();
+            testResult.Hide();
             dialogue.Hide();
             theory.Hide();
             modeSelect.Show(OnTrainingSelected, OnAdminSelected, OnTestingSelected);
@@ -102,7 +105,19 @@ namespace Arena.Bootstrap
         private void OnSkillsReadyFromTest(PlayerSkills skills)
         {
             playerSkills = skills;
-            adminConfig.Show(library, playerSkills, showSkillEditor: false, gameMode, OnConfigConfirmed);
+            testResult.Show(
+                skills,
+                library,
+                onStart: (scenario, s) =>
+                {
+                    playerSkills = s;
+                    dialogue.StartScenario(scenario, playerSkills, OnRequestNewScenario);
+                },
+                onConfigure: s =>
+                {
+                    playerSkills = s;
+                    adminConfig.Show(library, playerSkills, showSkillEditor: false, gameMode, OnConfigConfirmed);
+                });
         }
 
         private void OnConfigConfirmed(ScenarioData scenario, PlayerSkills skills, GameMode mode)
