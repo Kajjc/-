@@ -48,7 +48,23 @@ namespace Arena.Bootstrap
             theory = gameObject.AddComponent<TheoryController>();
 
             dialogue.OnOpenTheory = encounteredIds => theory.Show(encounteredIds, () => dialogue.Root.SetActive(true));
+            Theme.OnRequestMainMenu = ReturnToMainMenu;
 
+            modeSelect.Show(OnTrainingSelected, OnAdminSelected);
+        }
+
+        // Кнопка "домой" в углу (Theme.CreateCanvas) есть на любом экране, кроме
+        // самого экрана выбора режима, — прячет всё остальное и возвращает на него.
+        // Незавершённый диалог/тест/настройка при этом просто отбрасывается: у
+        // продукта и так нет сохранения между сессиями (см. правило демо в
+        // docs/roadmap.md), так что бросить текущий прогон на середине — не хуже,
+        // чем перезапустить сценарий заново через "Другой сценарий".
+        private void ReturnToMainMenu()
+        {
+            skillTest.Hide();
+            adminConfig.Hide();
+            dialogue.Hide();
+            theory.Hide();
             modeSelect.Show(OnTrainingSelected, OnAdminSelected);
         }
 

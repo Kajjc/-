@@ -29,7 +29,7 @@ namespace Arena.UI
         {
             if (root != null) return;
 
-            root = Theme.CreateCanvas(transform, "ModeSelectCanvas");
+            root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: false);
             Theme.SetCanvasBackground(root, "Backgrounds/title");
 
             var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleCenter, Theme.Amber);

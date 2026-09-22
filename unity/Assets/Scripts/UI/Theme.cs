@@ -96,7 +96,15 @@ namespace Arena.UI
             go.AddComponent<StandaloneInputModule>();
         }
 
-        public static RectTransform CreateCanvas(Transform parent, string name)
+        // GameFlow регистрирует сюда переход в главное меню один раз в Begin() —
+        // кнопка "домой" нужна сразу на всех экранах, а не как обычный переход
+        // между конкретной парой экранов (те уже получают свой callback явным
+        // параметром при Show(...) — см. DialogueUIController.StartScenario и
+        // т.п.). Тащить этот же параметр ещё и через Show(...) всех пяти
+        // контроллеров ради одной общей кнопки было бы лишним дублированием.
+        public static System.Action OnRequestMainMenu;
+
+        public static RectTransform CreateCanvas(Transform parent, string name, bool showMenuButton = true)
         {
             EnsureEventSystem();
 
@@ -114,35 +122,44 @@ namespace Arena.UI
             var background = CreatePanel(root, "Background", Navy);
             StretchFull(background);
 
-            CreateQuitButton(root);
+            // В WebGL Application.Quit ничего не делает — браузер не даёт странице
+            // закрыть саму себя — поэтому кнопка выхода там не создаётся вообще, а
+            // не показывается нерабочей. Кнопка меню технически безвредна и там
+            // (просто переключает экраны), но раз выхода всё равно нет, вторая
+            // кнопка в стопке без первой выглядела бы странно — отключаем обе разом.
+            if (Application.platform != RuntimePlatform.WebGLPlayer)
+            {
+                // Экран выбора режима — сам и есть главное меню, кнопка "туда же"
+                // на нём самом не нужна (showMenuButton=false у ModeSelectController).
+                CreateCornerButton(root, "QuitButton", 8, Coral, null, "X", QuitGame);
+                if (showMenuButton)
+                    CreateCornerButton(root, "MenuButton", 8 + 28 + 6, Teal, TryLoadSprite("Icons/icon_home"), null, () => OnRequestMainMenu?.Invoke());
+            }
 
             return root;
         }
 
-        // Кнопка выхода в правом верхнем углу — добавляется сюда, а не в каждый
-        // контроллер по отдельности, поэтому появляется на любом экране (все они
-        // создают свой Canvas через CreateCanvas). В WebGL Application.Quit ничего
-        // не делает — браузер не даёт странице закрыть саму себя — поэтому там
-        // кнопка не создаётся вообще, а не показывается нерабочей.
+        // Общий билдер маленькой квадратной кнопки в правом верхнем углу — общий
+        // для выхода и возврата в меню, чтобы не дублировать вёрстку дважды.
+        // yOffsetFromTop растёт по мере добавления новых кнопок в стопку вниз.
         //
-        // Маленький квадрат строго в углу (28x28, отступ 8px) — почти на всех
-        // экранах у самого верхнего правого края уже что-то есть (пипсы навыков в
-        // диалоге до x=0.95, счётчик вопроса в тесте навыков и "← Назад" в теории
-        // до x=0.94/y=0.97) — компактный размер и минимальный отступ гарантируют,
-        // что кнопка не перекрывает ни один из них. Подпись "X" — обычная ASCII-
-        // буква, а не символ "×": кастомный TMP-шрифт проекта собран только из
-        // Basic Latin + кириллицы (см. TmpFontBuilder.cs, урок К1), символа
-        // умножения в нём может не быть.
-        private static void CreateQuitButton(RectTransform canvasRoot)
+        // Компактный размер (28x28) и минимальный отступ — почти на всех экранах
+        // у самого верхнего правого края уже что-то есть (пипсы навыков в диалоге
+        // до x=0.95, счётчик вопроса в тесте навыков и "← Назад" в теории до
+        // x=0.94/y=0.97) — проверено, что эта колонка кнопок (правее x≈0.97) их
+        // не перекрывает. Текстовая подпись — только ASCII (кнопка выхода — "X",
+        // не "×"): кастомный TMP-шрифт проекта собран лишь из Basic Latin +
+        // кириллицы (см. TmpFontBuilder.cs, урок К1), символа умножения в нём
+        // может не быть — поэтому для кнопки меню вместо буквы используется
+        // отдельная иконка-домик (Resources/Icons/icon_home.png).
+        private static void CreateCornerButton(RectTransform canvasRoot, string name, float yOffsetFromTop, Color accent, Sprite icon, string textLabel, UnityEngine.Events.UnityAction onClick)
         {
-            if (Application.platform == RuntimePlatform.WebGLPlayer) return;
-
-            var buttonRect = CreatePanel(canvasRoot, "QuitButton", new Color(Coral.r, Coral.g, Coral.b, 0.85f));
+            var buttonRect = CreatePanel(canvasRoot, name, new Color(accent.r, accent.g, accent.b, 0.85f));
             buttonRect.anchorMin = new Vector2(1f, 1f);
             buttonRect.anchorMax = new Vector2(1f, 1f);
             buttonRect.pivot = new Vector2(1f, 1f);
             buttonRect.sizeDelta = new Vector2(28, 28);
-            buttonRect.anchoredPosition = new Vector2(-8, -8);
+            buttonRect.anchoredPosition = new Vector2(-8, -yOffsetFromTop);
 
             var button = buttonRect.gameObject.AddComponent<Button>();
             button.targetGraphic = buttonRect.GetComponent<Image>();
@@ -150,11 +167,27 @@ namespace Arena.UI
             colors.highlightedColor = new Color(1f, 1f, 1f, 0.92f);
             colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
             button.colors = colors;
-            button.onClick.AddListener(QuitGame);
+            button.onClick.AddListener(onClick);
 
-            var label = CreateText(buttonRect, "Label", 16, TextAnchor.MiddleCenter, Parchment);
-            StretchFull(label.rectTransform);
-            label.text = "X";
+            if (icon != null)
+            {
+                var iconGo = new GameObject("Icon", typeof(RectTransform));
+                iconGo.transform.SetParent(buttonRect, false);
+                var iconRect = (RectTransform)iconGo.transform;
+                iconRect.anchorMin = new Vector2(0.15f, 0.15f);
+                iconRect.anchorMax = new Vector2(0.85f, 0.85f);
+                iconRect.offsetMin = Vector2.zero;
+                iconRect.offsetMax = Vector2.zero;
+                var iconImage = iconGo.AddComponent<Image>();
+                iconImage.sprite = icon;
+                iconImage.color = Color.white;
+            }
+            else if (!string.IsNullOrEmpty(textLabel))
+            {
+                var label = CreateText(buttonRect, "Label", 16, TextAnchor.MiddleCenter, Parchment);
+                StretchFull(label.rectTransform);
+                label.text = textLabel;
+            }
         }
 
         public static void QuitGame()
