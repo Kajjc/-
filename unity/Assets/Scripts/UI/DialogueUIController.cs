@@ -48,6 +48,17 @@ namespace Arena.UI
         private bool isTransitioning;
         private const float FadeDuration = 0.15f;
 
+        // Гипотеза "голос оппонента": печать реплики по буквам + блип-звук на
+        // каждое слово (см. TypeOpponentLine, OpponentVoice.cs). Скорость
+        // откалибрована по реальной длине реплик в сценариях (docs/, медиана —
+        // 99 символов/16 слов, p90 — 157/26, редкие выбросы до 484 символов) —
+        // не быстрее и не медленнее, чем читается вслух в разумном темпе, с
+        // потолком общей длительности для редких очень длинных реплик.
+        private OpponentVoice voice;
+        private Coroutine typeCoroutine;
+        private const float CharsPerSecond = 50f;
+        private const float MaxTypeDuration = 4.5f;
+
         // Гипотеза Ю3 (docs/feature-hypotheses.md): реплики продублированы цифрами
         // и доступны с клавиатуры — быстрее и увереннее на питч-сессии, чем клики
         // мышью. Список в том же порядке, что и кнопки на экране.
@@ -67,12 +78,22 @@ namespace Arena.UI
 
         public void Hide()
         {
+            // Иначе печать реплики (и блипы голоса) продолжались бы в фоне после
+            // ухода с экрана диалога (например, по кнопке "Меню" посреди фразы) —
+            // Canvas скрывается, а корутина на этом же MonoBehaviour живёт дальше.
+            if (typeCoroutine != null)
+            {
+                StopCoroutine(typeCoroutine);
+                typeCoroutine = null;
+            }
             if (root != null) root.gameObject.SetActive(false);
         }
 
         private void BuildUiIfNeeded()
         {
             if (root != null) return;
+
+            voice = gameObject.AddComponent<OpponentVoice>();
 
             root = Theme.CreateCanvas(transform, "DialogueCanvas");
 
@@ -251,7 +272,8 @@ namespace Arena.UI
 
             endPanel.gameObject.SetActive(false);
             opponentRoleText.text = engine.Scenario.meta.opponentRole;
-            opponentText.text = engine.CurrentNode.opponentLine;
+            if (typeCoroutine != null) StopCoroutine(typeCoroutine);
+            typeCoroutine = StartCoroutine(TypeOpponentLine(engine.CurrentNode.opponentLine));
             RenderPips();
             RenderMood();
 
@@ -499,6 +521,46 @@ namespace Arena.UI
             }
             opponentTextGroup.alpha = target;
             optionsGroup.alpha = target;
+        }
+
+        // Печатает реплику оппонента по буквам (TMP.maxVisibleCharacters, а не
+        // пересборка строки — переживает любую разметку без ручного парсинга) и
+        // проигрывает блип голоса на каждое НОВОЕ слово, а не на каждый символ:
+        // у большинства клипов в банке длительность от ~0.1 до ~1.6с — по блипу
+        // на символ они бы наложились друг на друга сплошным гулом. Опции ответа
+        // при этом не ждут конца печати — доступны сразу после Render(), как и
+        // раньше, чтобы не замедлять принятие решения игроком.
+        private IEnumerator TypeOpponentLine(string line)
+        {
+            opponentText.text = line;
+            opponentText.maxVisibleCharacters = 0;
+            opponentText.ForceMeshUpdate();
+
+            if (string.IsNullOrEmpty(line))
+                yield break;
+
+            float delay = 1f / CharsPerSecond;
+            if (line.Length * delay > MaxTypeDuration)
+                delay = MaxTypeDuration / line.Length;
+
+            var wait = new WaitForSeconds(delay);
+            bool atWordStart = true;
+            var mood = engine.GetOpponentMood();
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+                opponentText.maxVisibleCharacters = i + 1;
+                if (char.IsWhiteSpace(c))
+                {
+                    atWordStart = true;
+                }
+                else if (atWordStart)
+                {
+                    atWordStart = false;
+                    voice.PlayBlip(mood);
+                }
+                yield return wait;
+            }
         }
 
         private void RenderEndScreen()
