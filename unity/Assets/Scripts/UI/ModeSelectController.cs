@@ -3,20 +3,25 @@ using UnityEngine;
 
 namespace Arena.UI
 {
-    // Первый экран флоу: кто сейчас за экраном (docs/skill-test.md, "Режим «Игрок»"
-    // vs "Режим «Администратор»"). Тренировка ведёт к тесту навыков (навыки задаёт
-    // сам обучаемый). Административный режим — прямой выбор уровня по каждому навыку
-    // и параметров сценария вручную, без теста (например, тренер готовит конкретный
-    // кейс под конкретного обучаемого).
+    // Главное меню: три входа — Тренировка (сразу в игру), Тестирование
+    // (тест → рекомендация → игра), Настройки администратора (ручная настройка).
     public class ModeSelectController : MonoBehaviour
     {
         private RectTransform root;
+        private Action onTraining;
+        private Action onTesting;
+        private Action onAdmin;
 
         public GameObject Root => root != null ? root.gameObject : null;
 
-        public void Show(Action onTraining, Action onAdmin)
+        // onTesting опционально — существующие вызовы Show(a, b) продолжают работать,
+        // просто карточка «Тестирование» будет вести по тому же пути, что Тренировка.
+        public void Show(Action onTraining, Action onAdmin, Action onTesting = null)
         {
-            BuildUiIfNeeded(onTraining, onAdmin);
+            this.onTraining = onTraining;
+            this.onTesting = onTesting ?? onTraining;
+            this.onAdmin = onAdmin;
+            BuildUiIfNeeded();
             root.gameObject.SetActive(true);
         }
 
@@ -25,11 +30,11 @@ namespace Arena.UI
             if (root != null) root.gameObject.SetActive(false);
         }
 
-        private void BuildUiIfNeeded(Action onTraining, Action onAdmin)
+        private void BuildUiIfNeeded()
         {
             if (root != null) return;
 
-            root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: false);
+            root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: true);
             Theme.SetCanvasBackground(root, "Backgrounds/title");
 
             var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleCenter, Theme.Amber);
@@ -48,16 +53,23 @@ namespace Arena.UI
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            Theme.CreateOptionCard(root, 0.1f, 0.47f, 0.22f, 0.55f,
+            // Три карточки: каждая ~28% ширины, промежутки по 2%.
+            Theme.CreateOptionCard(root, 0.06f, 0.34f, 0.22f, 0.55f,
                 "Тренировка",
-                "Пройти тест навыков (18 вопросов, ~2 минуты) и сразу начать переговоры.",
-                Theme.Teal,
+                "Сразу к переговорам — без теста. Сценарий подберётся автоматически.",
+                Theme.Sage,
                 () => onTraining?.Invoke());
 
-            Theme.CreateOptionCard(root, 0.53f, 0.9f, 0.22f, 0.55f,
-                "Настройки администратора",
-                "Задать уровень навыков и параметры сценария вручную — без теста, для тренера.",
+            Theme.CreateOptionCard(root, 0.36f, 0.64f, 0.22f, 0.55f,
+                "Тестирование",
+                "18 вопросов, ~2 минуты. Получи рекомендованный сценарий по навыкам.",
                 Theme.Amber,
+                () => onTesting?.Invoke());
+
+            Theme.CreateOptionCard(root, 0.66f, 0.94f, 0.22f, 0.55f,
+                "Настройки администратора",
+                "Уровень навыков и параметры сценария вручную — для тренера.",
+                Theme.Teal,
                 () => onAdmin?.Invoke());
         }
     }
