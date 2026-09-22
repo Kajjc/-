@@ -55,7 +55,7 @@ namespace Arena.UI
                 () => onTraining?.Invoke());
 
             Theme.CreateOptionCard(root, 0.53f, 0.9f, 0.22f, 0.55f,
-                "Административный режим",
+                "Настройки администратора",
                 "Задать уровень навыков и параметры сценария вручную — без теста, для тренера.",
                 Theme.Amber,
                 () => onAdmin?.Invoke());
