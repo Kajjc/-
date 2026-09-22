@@ -8,6 +8,10 @@ namespace Arena.UI
 {
     // Экран теста навыков (docs/skill-test.md, режим «Игрок»): 18 утверждений
     // в перемешанном порядке, 3-балльная шкала, на выходе — PlayerSkills.
+    // Кнопка «Пропустить тест» ведёт сразу к настройке сценария с дефолтными
+    // навыками — на случай, если пользователь передумал проходить тест.
+    // Возврат в главное меню обеспечивает глобальная кнопка «домой»
+    // (Theme.CreateCanvas → OnRequestMainMenu), отдельная кнопка не нужна.
     public class SkillTestController : MonoBehaviour
     {
         private RectTransform root;
@@ -18,14 +22,19 @@ namespace Arena.UI
         private RectTransform answersContainer;
 
         private Action<PlayerSkills> onComplete;
+        private Action onSkip;
         private int questionIndex;
         private int naporSum, empatiyaSum, logikaSum;
 
         public GameObject Root => root != null ? root.gameObject : null;
 
-        public void Show(Action<PlayerSkills> onComplete)
+        // onSkip опционален: если не передан, кнопка всё равно рисуется, но
+        // ничего не делает. Существующие вызовы Show(onComplete) продолжают
+        // работать без изменений.
+        public void Show(Action<PlayerSkills> onComplete, Action onSkip = null)
         {
             this.onComplete = onComplete;
+            this.onSkip = onSkip;
             questionIndex = 0;
             naporSum = 0;
             empatiyaSum = 0;
@@ -99,8 +108,8 @@ namespace Arena.UI
             var answersGo = new GameObject("Answers", typeof(RectTransform));
             answersGo.transform.SetParent(panel, false);
             answersContainer = (RectTransform)answersGo.transform;
-            answersContainer.anchorMin = new Vector2(0.12f, 0.15f);
-            answersContainer.anchorMax = new Vector2(0.88f, 0.35f);
+            answersContainer.anchorMin = new Vector2(0.12f, 0.20f);
+            answersContainer.anchorMax = new Vector2(0.88f, 0.40f);
             answersContainer.offsetMin = Vector2.zero;
             answersContainer.offsetMax = Vector2.zero;
             var layout = answersGo.AddComponent<HorizontalLayoutGroup>();
@@ -109,6 +118,19 @@ namespace Arena.UI
             layout.childForceExpandHeight = true;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
+
+            // Кнопка «Пропустить тест» — внизу по центру, неброская.
+            var skipBtn = Theme.CreateButton(
+                panel,
+                "Пропустить тест →",
+                new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.06f),
+                Theme.Amber,
+                () => { Hide(); onSkip?.Invoke(); });
+            var skipRect = (RectTransform)skipBtn.transform;
+            skipRect.anchorMin = new Vector2(0.34f, 0.06f);
+            skipRect.anchorMax = new Vector2(0.66f, 0.13f);
+            skipRect.offsetMin = Vector2.zero;
+            skipRect.offsetMax = Vector2.zero;
         }
 
         private void RenderQuestion()

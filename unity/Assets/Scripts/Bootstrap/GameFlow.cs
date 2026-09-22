@@ -5,10 +5,11 @@ using UnityEngine;
 
 namespace Arena.Bootstrap
 {
-    // Оркестратор полного флоу: выбор режима -> (тест навыков ИЛИ ручная настройка
-    // навыков+сценария в админ-режиме) -> диалог -> фидбек -> (повтор того же сценария
-    // или возврат к настройке для нового, в том же режиме). Один персистентный
-    // GameObject держит все четыре экрана-контроллера и просто переключает, какой активен.
+    // Оркестратор полного флоу:
+    //   Тренировка   → автозапуск лёгкого сценария (без теста, без настройки)
+    //   Тестирование → тест навыков (с пропуском) → настройка → сценарий
+    //   Админ        → ручная настройка + редактируемые навыки
+    // Далее → диалог → фидбек → (повтор или возврат к настройке).
     public class GameFlow : MonoBehaviour
     {
         private List<ScenarioData> library;
@@ -16,9 +17,6 @@ namespace Arena.Bootstrap
         private bool adminMode;
         private GameMode gameMode = GameMode.Training;
 
-        // Пока ничем не отличается от Training по поведению — точка опоры для
-        // будущих обучающих функций, которые будут читать этот флаг оттуда, где
-        // появятся (диалог, экран итога и т.п.).
         public GameMode CurrentGameMode => gameMode;
 
         private ModeSelectController modeSelect;
@@ -32,10 +30,6 @@ namespace Arena.Bootstrap
             library = ScenarioLibrary.LoadAll();
             if (library.Count == 0)
             {
-                // К4 (docs/feature-hypotheses.md): раньше здесь был только
-                // Debug.LogError и return — на билде без консоли (WebGL-демо для
-                // жюри) это выглядело как чёрный/пустой экран без единой подсказки,
-                // что пошло не так. Теперь ошибка видна прямо в игре.
                 Debug.LogError("Не найдено ни одного сценария в Resources/Scenarios — движку нечего показывать.");
                 ShowFatalError("Не удалось загрузить ни одного сценария.\n\nПроверьте файлы в Resources/Scenarios — возможно, один из них повреждён или папка пуста.");
                 return;
@@ -50,29 +44,52 @@ namespace Arena.Bootstrap
             dialogue.OnOpenTheory = encounteredIds => theory.Show(encounteredIds, () => dialogue.Root.SetActive(true));
             Theme.OnRequestMainMenu = ReturnToMainMenu;
 
-            modeSelect.Show(OnTrainingSelected, OnAdminSelected);
+            modeSelect.Show(OnTrainingSelected, OnAdminSelected, OnTestingSelected);
         }
 
-        // Кнопка "домой" в углу (Theme.CreateCanvas) есть на любом экране, кроме
-        // самого экрана выбора режима, — прячет всё остальное и возвращает на него.
-        // Незавершённый диалог/тест/настройка при этом просто отбрасывается: у
-        // продукта и так нет сохранения между сессиями (см. правило демо в
-        // docs/roadmap.md), так что бросить текущий прогон на середине — не хуже,
-        // чем перезапустить сценарий заново через "Другой сценарий".
         private void ReturnToMainMenu()
         {
             skillTest.Hide();
             adminConfig.Hide();
             dialogue.Hide();
             theory.Hide();
-            modeSelect.Show(OnTrainingSelected, OnAdminSelected);
+            modeSelect.Show(OnTrainingSelected, OnAdminSelected, OnTestingSelected);
         }
 
+        // «Тренировка» — сразу в игру. Без теста, без экрана настройки:
+        // автоподбор лёгкого сценария + дефолтные навыки 2/2/2.
         private void OnTrainingSelected()
         {
             adminMode = false;
             modeSelect.Hide();
-            skillTest.Show(OnSkillsReadyFromTest);
+            playerSkills = new PlayerSkills { napor = 2, empatiya = 2, logika = 2 };
+
+            var scenario = PickTrainingScenario();
+            dialogue.StartScenario(scenario, playerSkills, OnRequestNewScenario);
+        }
+
+        // Автоподбор: первый лёгкий сценарий в библиотеке; если такого нет —
+        // просто первый. На практике это hr_salary_*_easy — мягкий вход для новичка.
+        private ScenarioData PickTrainingScenario()
+        {
+            foreach (var s in library)
+                if (s.meta.difficulty == 1)
+                    return s;
+            return library[0];
+        }
+
+        // «Тестирование» — тест навыков с возможностью пропустить.
+        private void OnTestingSelected()
+        {
+            adminMode = false;
+            modeSelect.Hide();
+            skillTest.Show(
+                onComplete: OnSkillsReadyFromTest,
+                onSkip: () =>
+                {
+                    playerSkills = new PlayerSkills { napor = 2, empatiya = 2, logika = 2 };
+                    adminConfig.Show(library, playerSkills, showSkillEditor: false, gameMode, OnConfigConfirmed);
+                });
         }
 
         private void OnAdminSelected()
@@ -100,9 +117,6 @@ namespace Arena.Bootstrap
             adminConfig.Show(library, playerSkills, showSkillEditor: adminMode, gameMode, OnConfigConfirmed);
         }
 
-        // К4 (docs/feature-hypotheses.md): любое фатальное состояние на старте
-        // (сейчас — пустая библиотека сценариев) показывает понятный текст вместо
-        // тишины, чтобы демо не могло незаметно "зависнуть" на скрытой ошибке.
         private void ShowFatalError(string message)
         {
             var root = Theme.CreateCanvas(transform, "FatalErrorCanvas");
