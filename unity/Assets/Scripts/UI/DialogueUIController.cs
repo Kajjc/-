@@ -387,14 +387,17 @@ namespace Arena.UI
         }
 
         // Гипотеза Ю7: портрет по настроению (Resources/Portraits/<домен>_<настроение>.png,
-        // например hr_irritated.png) — пока нарисованы схематичные плейсхолдеры только для
-        // HR, на остальные домены откатывается на прежний нейтральный Portraits/<домен>.png,
-        // а если и его нет — на плашку-заглушку. Ничего не ломается по мере добавления
-        // реальных ассетов постепенно, домен за доменом.
+        // например hr_irritated.png; настроений пять — neutral/calm/pleased/wary/irritated).
+        // Реальные портреты пока только у HR; у остальных доменов схематичные заглушки
+        // четырёх настроений без neutral. Цепочка отката: файл нужного настроения ->
+        // для neutral файл calm (иначе на старте каждого разговора у ещё не нарисованных
+        // доменов была бы плашка-заглушка) -> прежний общий Portraits/<домен>.png ->
+        // плашка-заглушка. Ничего не ломается по мере добавления ассетов постепенно.
         private void UpdatePortraitSprite(string moodSuffix)
         {
             var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere) ?? engine.Scenario.meta.id;
             var sprite = Theme.TryLoadSprite($"Portraits/{domainKey}_{moodSuffix}")
+                ?? (moodSuffix == "neutral" ? Theme.TryLoadSprite($"Portraits/{domainKey}_calm") : null)
                 ?? Theme.TryLoadSprite($"Portraits/{domainKey}");
             if (sprite != null)
             {
@@ -432,6 +435,13 @@ namespace Arena.UI
             string moodSuffix;
             switch (mood)
             {
+                case OpponentMood.Neutral:
+                    // Холодный серо-голубой — не совпадает ни с одним из четырёх
+                    // смысловых акцентов (Sage/Amber/Coral/Teal), читается как "реакции ещё нет".
+                    color = Theme.LogikaAccent;
+                    label = "Нейтрален";
+                    moodSuffix = "neutral";
+                    break;
                 case OpponentMood.Pleased:
                     color = Theme.Sage;
                     label = "Доволен";

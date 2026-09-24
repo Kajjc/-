@@ -22,8 +22,11 @@ namespace Arena.UI
     {
         private const int PoolSize = 6;
 
+        // Neutral звучит только на первой реплике разговора — отдельный банк ради
+        // одной реплики не нужен, берём банк "спокоен".
         private static readonly Dictionary<OpponentMood, string> FolderByMood = new Dictionary<OpponentMood, string>
         {
+            { OpponentMood.Neutral, "calm" },
             { OpponentMood.Calm, "calm" },
             { OpponentMood.Pleased, "pleased" },
             { OpponentMood.Wary, "wary" },
@@ -36,6 +39,7 @@ namespace Arena.UI
         // а не синтеза.
         private static readonly Dictionary<OpponentMood, (float pitch, float jitter, float volume)> Tuning = new Dictionary<OpponentMood, (float, float, float)>
         {
+            { OpponentMood.Neutral, (1.0f, 0.05f, 0.55f) },
             { OpponentMood.Calm, (1.0f, 0.05f, 0.55f) },
             { OpponentMood.Pleased, (1.18f, 0.08f, 0.6f) },
             { OpponentMood.Wary, (0.95f, 0.07f, 0.5f) },
