@@ -31,6 +31,7 @@ namespace Arena.UI
         private Image portraitImage;
         private GameObject portraitTint;
         private Image moodBarImage;
+        private Image moodDotImage;
         private TMP_Text moodText;
         private TMP_Text opponentRoleText;
         private RectTransform pipsRow;
@@ -154,12 +155,31 @@ namespace Arena.UI
             // настроения -> реплика оппонента. Правая граница роли/настроения (0.64)
             // оставляет зазор до полосы навыков (она прижата к правому краю и занимает
             // ~0.67-0.95 при канвасе 16:10).
-            moodText = Theme.CreateText(root, "MoodLabel", 17, TextAnchor.MiddleLeft, Theme.Teal);
+            //
+            // Подпись настроения: цвет настроения на тёмном фоне читался плохо (бирюзовый
+            // "Спокоен" сливался со сценой), поэтому сам текст — светлый Parchment, как
+            // роль и реплика, а настроение несёт цветная точка слева от него (плюс полоса
+            // под портретом).
+            var moodChip = new GameObject("MoodChip", typeof(RectTransform));
+            moodChip.transform.SetParent(root, false);
+            var moodChipRect = (RectTransform)moodChip.transform;
+            moodChipRect.anchorMin = new Vector2(TextColumnLeft, 0.84f);
+            moodChipRect.anchorMax = new Vector2(0.64f, 0.885f);
+            moodChipRect.offsetMin = Vector2.zero;
+            moodChipRect.offsetMax = Vector2.zero;
+
+            var moodDotRect = Theme.CreatePanel(moodChipRect, "MoodDot", Theme.Teal);
+            moodDotRect.anchorMin = new Vector2(0f, 0.5f);
+            moodDotRect.anchorMax = new Vector2(0f, 0.5f);
+            moodDotRect.pivot = new Vector2(0f, 0.5f);
+            moodDotRect.anchoredPosition = Vector2.zero;
+            moodDotRect.sizeDelta = new Vector2(16f, 16f);
+            moodDotImage = moodDotRect.GetComponent<Image>();
+
+            moodText = Theme.CreateText(moodChipRect, "MoodLabel", 20, TextAnchor.MiddleLeft, Theme.Parchment);
             var moodTextRect = moodText.rectTransform;
-            moodTextRect.anchorMin = new Vector2(TextColumnLeft, 0.84f);
-            moodTextRect.anchorMax = new Vector2(0.64f, 0.885f);
-            moodTextRect.offsetMin = Vector2.zero;
-            moodTextRect.offsetMax = Vector2.zero;
+            Theme.StretchFull(moodTextRect);
+            moodTextRect.offsetMin = new Vector2(26f, 0f);
 
             // Подпись роли бывает длинной ("непосредственный руководитель — тот же, с кем
             // несколько месяцев назад уже обсуждали повышение" — две-три строки), поэтому
@@ -503,7 +523,7 @@ namespace Arena.UI
             }
 
             moodBarImage.color = color;
-            moodText.color = color;
+            moodDotImage.color = color;
             moodText.text = label;
             UpdatePortraitSprite(moodSuffix);
         }
