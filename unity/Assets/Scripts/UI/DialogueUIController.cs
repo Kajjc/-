@@ -59,6 +59,14 @@ namespace Arena.UI
         private const float CharsPerSecond = 50f;
         private const float MaxTypeDuration = 4.5f;
 
+        // Шапка диалога: портрет слева, текстовая колонка справа. Пропорции арта 1.2:1
+        // (scripts/prepare_portrait.py) — при смене там менять и здесь.
+        private const float PortraitLeft = 0.05f;
+        private const float PortraitRight = 0.215f;
+        private const float PortraitTop = 0.955f;
+        private const float PortraitAspect = 1.2f;
+        private const float TextColumnLeft = 0.235f;
+
         // Гипотеза Ю3 (docs/feature-hypotheses.md): реплики продублированы цифрами
         // и доступны с клавиатуры — быстрее и увереннее на питч-сессии, чем клики
         // мышью. Список в том же порядке, что и кнопки на экране.
@@ -97,14 +105,27 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "DialogueCanvas");
 
-            // Портрет: пробует Resources/Portraits/<id сценария>.png (см. docs/team-plan.md);
-            // если файла нет — градиентная плашка-заглушка вместо реального портрета.
+            // Портрет: Resources/Portraits/<домен>_<настроение>.png (см. docs/team-plan.md);
+            // если файла нет — плашка-заглушка вместо реального портрета.
+            //
+            // Раскладка шапки: портрет — левая колонка, а вся текстовая колонка (роль,
+            // настроение, реплика оппонента) стоит правее него. Ширина портрета — доля
+            // канваса, а высоту выводит из неё AspectRatioFitter по пропорциям арта.
+            // Раньше слот задавался процентами по обеим осям, и в окне не 16:10 (например,
+            // в очень широком окне Game в редакторе, ~2.4:1) он растягивался вместе с
+            // картинкой — лица выходили сплюснутыми. Реплика оппонента раньше начиналась
+            // под портретом и при более высоком портрете наползала бы на него; теперь она
+            // правее портрета целиком, поэтому пересечение невозможно при любой форме окна.
             portrait = Theme.CreatePanel(root, "Portrait", Theme.Slate);
             portraitImage = portrait.GetComponent<Image>();
-            portrait.anchorMin = new Vector2(0.05f, 0.82f);
-            portrait.anchorMax = new Vector2(0.16f, 0.95f);
+            portrait.anchorMin = new Vector2(PortraitLeft, PortraitTop);
+            portrait.anchorMax = new Vector2(PortraitRight, PortraitTop);
+            portrait.pivot = new Vector2(0.5f, 1f);
             portrait.offsetMin = Vector2.zero;
             portrait.offsetMax = Vector2.zero;
+            var portraitFitter = portrait.gameObject.AddComponent<AspectRatioFitter>();
+            portraitFitter.aspectMode = AspectRatioFitter.AspectMode.WidthControlsHeight;
+            portraitFitter.aspectRatio = PortraitAspect;
             var portraitTintRect = Theme.CreatePanel(portrait, "Tint", new Color(Theme.Teal.r, Theme.Teal.g, Theme.Teal.b, 0.5f));
             portraitTintRect.anchorMin = new Vector2(0f, 0f);
             portraitTintRect.anchorMax = new Vector2(1f, 0.5f);
@@ -129,17 +150,27 @@ namespace Arena.UI
             moodBarRect.offsetMax = Vector2.zero;
             moodBarImage = moodBarRect.GetComponent<Image>();
 
-            moodText = Theme.CreateText(root, "MoodLabel", 15, TextAnchor.MiddleLeft, Theme.Teal);
+            // Текстовая колонка справа от портрета, сверху вниз: роль -> подпись
+            // настроения -> реплика оппонента. Правая граница роли/настроения (0.64)
+            // оставляет зазор до полосы навыков (она прижата к правому краю и занимает
+            // ~0.67-0.95 при канвасе 16:10).
+            moodText = Theme.CreateText(root, "MoodLabel", 17, TextAnchor.MiddleLeft, Theme.Teal);
             var moodTextRect = moodText.rectTransform;
-            moodTextRect.anchorMin = new Vector2(0.18f, 0.8f);
-            moodTextRect.anchorMax = new Vector2(0.6f, 0.855f);
+            moodTextRect.anchorMin = new Vector2(TextColumnLeft, 0.84f);
+            moodTextRect.anchorMax = new Vector2(0.64f, 0.885f);
             moodTextRect.offsetMin = Vector2.zero;
             moodTextRect.offsetMax = Vector2.zero;
 
+            // Подпись роли бывает длинной ("непосредственный руководитель — тот же, с кем
+            // несколько месяцев назад уже обсуждали повышение" — две-три строки), поэтому
+            // размер шрифта подстраивается под коробку, а не вылезает на подпись настроения.
             opponentRoleText = Theme.CreateText(root, "OpponentRole", 20, TextAnchor.UpperLeft, Theme.Parchment);
+            opponentRoleText.enableAutoSizing = true;
+            opponentRoleText.fontSizeMin = 15;
+            opponentRoleText.fontSizeMax = 20;
             var roleRect = opponentRoleText.rectTransform;
-            roleRect.anchorMin = new Vector2(0.18f, 0.88f);
-            roleRect.anchorMax = new Vector2(0.6f, 0.95f);
+            roleRect.anchorMin = new Vector2(TextColumnLeft, 0.885f);
+            roleRect.anchorMax = new Vector2(0.64f, PortraitTop);
             roleRect.offsetMin = Vector2.zero;
             roleRect.offsetMax = Vector2.zero;
 
@@ -156,10 +187,17 @@ namespace Arena.UI
             pipsLayout.childForceExpandWidth = false;
             pipsLayout.childForceExpandHeight = true;
 
+            // Реплика правее портрета и выше блока ответов. Коробка уже прежней (0.72
+            // вместо 0.9 ширины канваса), но выше (0.5-0.83 вместо 0.55-0.8), а шрифт
+            // автоматически уменьшается с 28 до 20, если очень длинная реплика (в
+            // сценариях бывает до ~480 символов) иначе не влезла бы и полезла на ответы.
             opponentText = Theme.CreateText(root, "OpponentLine", 28, TextAnchor.UpperLeft, Theme.Parchment);
+            opponentText.enableAutoSizing = true;
+            opponentText.fontSizeMin = 20;
+            opponentText.fontSizeMax = 28;
             var opponentRect = opponentText.rectTransform;
-            opponentRect.anchorMin = new Vector2(0.05f, 0.55f);
-            opponentRect.anchorMax = new Vector2(0.95f, 0.8f);
+            opponentRect.anchorMin = new Vector2(TextColumnLeft, 0.5f);
+            opponentRect.anchorMax = new Vector2(0.95f, 0.83f);
             opponentRect.offsetMin = Vector2.zero;
             opponentRect.offsetMax = Vector2.zero;
             opponentTextGroup = opponentText.gameObject.AddComponent<CanvasGroup>();
