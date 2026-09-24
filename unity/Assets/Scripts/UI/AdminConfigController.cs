@@ -78,6 +78,14 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "AdminConfigCanvas");
 
+            // Resources/Backgrounds/config.png — тёмная сцена с лучом света над пустым
+            // переговорным столом. Полупрозрачная: Navy-подложка затемняет картинку
+            // наполовину (по замеру контраст светлого текста на 99% площади не ниже
+            // ~5:1, только в самом ядре луча — ниже), чтобы подписи, чипы и иконки
+            // навыков читались, а сцена оставалась видимой. Экран общий — и для
+            // администратора ("Настройка кейса"), и для игрока после теста.
+            Theme.SetCanvasBackground(root, "Backgrounds/config", scrimAlpha: 0.5f);
+
             var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleLeft, Theme.Teal);
             eyebrow.text = showSkillEditor ? "АДМИНИСТРАТОР — НАСТРОЙКА КЕЙСА" : "НАСТРОЙКА СЦЕНАРИЯ";
             var eyebrowRect = eyebrow.rectTransform;

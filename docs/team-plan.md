@@ -40,6 +40,7 @@
 | Фон — переговорная клиента | §3.2, фон 2 | `unity/Assets/Resources/Backgrounds/sales.png` |
 | Фон — офис поставщика | §3.2, фон 3 | `unity/Assets/Resources/Backgrounds/procurement.png` |
 | Титульный арт (опционально, §3.4) | §3.4 | `unity/Assets/Resources/Backgrounds/title.png` |
+| Фон — экран настройки кейса (админ-конфиг) | — | `unity/Assets/Resources/Backgrounds/config.png` (полупрозрачный: `AdminConfigController`, затемнение Navy 0.5) |
 | Иконка — Напор | §3.3 | `unity/Assets/Resources/Icons/skill_napor.png` |
 | Иконка — Эмпатия | §3.3 | `unity/Assets/Resources/Icons/skill_empatiya.png` |
 | Иконка — Логика | §3.3 | `unity/Assets/Resources/Icons/skill_logika.png` |
