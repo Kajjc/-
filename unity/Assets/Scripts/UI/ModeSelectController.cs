@@ -37,25 +37,13 @@ namespace Arena.UI
             root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: true);
             Theme.SetCanvasBackground(root, "Backgrounds/title", scrimAlpha: 0.2f);
 
-            // Логотип (Resources/Icons/logo.png, подготовлен scripts/prepare_logo.py —
-            // надпись в нём перекрашена в светлый, иначе на тёмном меню пропадает) —
-            // сверху по центру. Коробка задаёт максимальную область, а сама картинка
-            // вписывается в неё с сохранением пропорций (preserveAspect), поэтому не
-            // растягивается при любой форме окна. Если файла нет — прежняя текстовая
-            // надпись "АРЕНА ПЕРЕГОВОРОВ" на своём месте.
-            var logoSprite = Theme.TryLoadSprite("Icons/logo");
+            // Логотип (Theme.CreateLogo; надпись в нём перекрашена в светлый, иначе на
+            // тёмном меню пропадает) — сверху по центру. Если файла нет — прежняя
+            // текстовая надпись "АРЕНА ПЕРЕГОВОРОВ" на своём месте.
+            var logoRect = Theme.CreateLogo(root, new Vector2(0.25f, 0.665f), new Vector2(0.75f, 0.985f));
             float titleMinY, titleMaxY;
-            if (logoSprite != null)
+            if (logoRect != null)
             {
-                var logoRect = Theme.CreatePanel(root, "Logo", Color.white);
-                logoRect.anchorMin = new Vector2(0.25f, 0.665f);
-                logoRect.anchorMax = new Vector2(0.75f, 0.985f);
-                logoRect.offsetMin = Vector2.zero;
-                logoRect.offsetMax = Vector2.zero;
-                var logoImage = logoRect.GetComponent<UnityEngine.UI.Image>();
-                logoImage.sprite = logoSprite;
-                logoImage.preserveAspect = true;
-                logoImage.raycastTarget = false;
                 titleMinY = 0.56f;
                 titleMaxY = 0.65f;
             }

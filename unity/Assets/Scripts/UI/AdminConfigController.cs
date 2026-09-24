@@ -86,6 +86,12 @@ namespace Arena.UI
             // администратора ("Настройка кейса"), и для игрока после теста.
             Theme.SetCanvasBackground(root, "Backgrounds/config", scrimAlpha: 0.5f);
 
+            // Логотип по центру, в свободной полосе между строкой навыков и нижней
+            // панелью сценария: слева тут только чипы сферы/тона/сложности (заканчиваются
+            // примерно на 0.4 ширины), справа — переключатель режима (от 0.73), так что
+            // по горизонтали логотип им не мешает. По вертикали ниже строки сферы.
+            Theme.CreateLogo(root, new Vector2(0.375f, 0.255f), new Vector2(0.625f, 0.625f));
+
             var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleLeft, Theme.Teal);
             eyebrow.text = showSkillEditor ? "АДМИНИСТРАТОР — НАСТРОЙКА КЕЙСА" : "НАСТРОЙКА СЦЕНАРИЯ";
             var eyebrowRect = eyebrow.rectTransform;
@@ -129,7 +135,10 @@ namespace Arena.UI
             // не создаются здесь — только контейнер и подпись; набор тонов зависит от
             // selectedSphere и пересобирается в RebuildToneChips (вызывается из Show()
             // и при смене сферы), а не строится один раз на весь список тонов сразу.
-            BuildFieldLabel("ТОН СОБЕСЕДНИКА", y);
+            // Подпись поднята на 0.04 над обычным местом: строка тона выше остальных
+            // (0.1 вместо 0.06), и стандартная подпись (y+0.065..0.11) наезжала на
+            // верх самих чипов.
+            BuildFieldLabel("ТОН СОБЕСЕДНИКА", y + 0.04f);
             var toneRowGo = new GameObject("ТонСобеседникаRow", typeof(RectTransform));
             toneRowGo.transform.SetParent(root, false);
             toneRow = (RectTransform)toneRowGo.transform;
@@ -432,13 +441,15 @@ namespace Arena.UI
                 difficultyDots.Add(dotImage);
             }
 
-            var difficultyLabel = Theme.CreateText(root, "DifficultyValue", 17, TextAnchor.MiddleLeft, Theme.Muted);
+            // "N из 3" — прямо за квадратиками, в той же строке (раньше стояло отдельной
+            // подписью с якорем 0.42 ширины — далеко от квадратиков и ровно там, где
+            // теперь логотип).
+            var gapGo = new GameObject("Gap", typeof(RectTransform));
+            gapGo.transform.SetParent(difficultyRow, false);
+            gapGo.AddComponent<LayoutElement>().minWidth = 10;
+
+            var difficultyLabel = Theme.CreateText(difficultyRow, "DifficultyValue", 17, TextAnchor.MiddleLeft, Theme.Muted);
             difficultyLabel.name = "DifficultyValueText";
-            var diffValRect = difficultyLabel.rectTransform;
-            diffValRect.anchorMin = new Vector2(0.42f, y);
-            diffValRect.anchorMax = new Vector2(0.7f, y + 0.06f);
-            diffValRect.offsetMin = Vector2.zero;
-            diffValRect.offsetMax = Vector2.zero;
             difficultyValueText = difficultyLabel;
         }
 

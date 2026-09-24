@@ -284,6 +284,27 @@ namespace Arena.UI
         // (Resources/Portraits|Backgrounds|Icons/<имя>.png) — null, если файла ещё нет.
         public static Sprite TryLoadSprite(string resourcePath) => Resources.Load<Sprite>(resourcePath);
 
+        // Логотип (Resources/Icons/logo.png, подготовлен scripts/prepare_logo.py) в
+        // коробке с заданными якорями. Картинка вписывается в коробку с сохранением
+        // пропорций (preserveAspect), поэтому не растягивается при любой форме окна.
+        // null, если файла ещё нет — вызывающий сам решает, что рисовать вместо него.
+        public static RectTransform CreateLogo(Transform parent, Vector2 anchorMin, Vector2 anchorMax)
+        {
+            var sprite = TryLoadSprite("Icons/logo");
+            if (sprite == null) return null;
+
+            var rect = CreatePanel(parent, "Logo", Color.white);
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            var image = rect.GetComponent<Image>();
+            image.sprite = sprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            return rect;
+        }
+
         // Иконка навыка (Resources/Icons/skill_<napor|empatiya|logika>.png) для строк
         // с лэйаут-группой. Возвращает "держатель" фиксированного предпочтительного
         // размера — группа с childForceExpandHeight растягивает его по высоте строки,
