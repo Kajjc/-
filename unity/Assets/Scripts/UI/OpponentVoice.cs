@@ -5,17 +5,17 @@ using UnityEngine;
 namespace Arena.UI
 {
     // Гипотеза "голос оппонента" (обсуждение по мотивам Graveyard Keeper):
-    // короткие вокализации вместо полноценной озвучки, один блип на слово по
-    // ходу печати реплики (см. DialogueUIController.TypeOpponentLine). Банк
-    // звуков — купленный бесплатный ассет "Dialog Text - Sound Effects" (AD
-    // Sounds), отобран по 4 подпапкам из него под конкретные настроения после
-    // акустического анализа (питч/громкость) исходных файлов, не наугад по
-    // названию — см. docs/feature-hypotheses.md.
+    // короткие вокализации вместо полноценной озвучки, один звук на слово по
+    // ходу печати реплики (см. DialogueUIController.TypeOpponentLine). Банк звуков —
+    // нарезка из четырёх образцов gibberish-голоса (по одному на настроение), которые
+    // выбрал автор проекта: scripts/slice_voice.py режет каждую запись-бормотание на
+    // куски 0.1-0.6 с по паузам и провалам громкости, чтобы кусок звучал как одно
+    // "слово". Исходные записи лежат вне Assets — assets-src/voices/.
     //
     // Пул источников, а не один AudioSource: PlayOneShot корректно накладывает
     // несколько одновременных воспроизведений на одном источнике, но питч
     // читается с источника в реальном времени — если менять его на лету между
-    // соседними блипами, уже играющие (более длинные, до ~1.6с) блипы будут
+    // соседними блипами, уже играющие блипы будут
     // слышимо "перепитчованы" на середине. Пул из нескольких источников с
     // раздельным питчем на каждый блип устраняет этот эффект.
     public class OpponentVoice : MonoBehaviour
@@ -33,20 +33,23 @@ namespace Arena.UI
             { OpponentMood.Irritated, "irritated" },
         };
 
-        // Базовый питч/разброс/громкость на настроение — тот же принцип, что
-        // проверялся на синтезированном прототипе (доволен выше и чуть громче,
-        // раздражён ниже и резче), но поверх настоящих записанных вокализаций,
-        // а не синтеза.
+        // Базовый питч/разброс/громкость на настроение. Сами образцы уже разные по
+        // характеру (их подбирали под настроения), поэтому питч почти не сдвигаем — только
+        // слегка "светлее" у довольного; разброс нужен, чтобы одни и те же несколько
+        // кусков не звучали механически. Громкость — доля от выровненных по RMS клипов.
         private static readonly Dictionary<OpponentMood, (float pitch, float jitter, float volume)> Tuning = new Dictionary<OpponentMood, (float, float, float)>
         {
-            { OpponentMood.Neutral, (1.0f, 0.05f, 0.55f) },
-            { OpponentMood.Calm, (1.0f, 0.05f, 0.55f) },
-            { OpponentMood.Pleased, (1.18f, 0.08f, 0.6f) },
-            { OpponentMood.Wary, (0.95f, 0.07f, 0.5f) },
-            { OpponentMood.Irritated, (0.85f, 0.1f, 0.65f) },
+            { OpponentMood.Neutral, (1.0f, 0.06f, 0.55f) },
+            { OpponentMood.Calm, (1.0f, 0.06f, 0.55f) },
+            { OpponentMood.Pleased, (1.04f, 0.07f, 0.6f) },
+            { OpponentMood.Wary, (1.0f, 0.06f, 0.55f) },
+            { OpponentMood.Irritated, (1.0f, 0.07f, 0.6f) },
         };
 
         private readonly Dictionary<OpponentMood, AudioClip[]> clipsByMood = new Dictionary<OpponentMood, AudioClip[]>();
+        // Последний сыгранный кусок по настроению: клипов в банке мало (3-7), и один и
+        // тот же дважды подряд звучал бы как заевшая пластинка.
+        private readonly Dictionary<OpponentMood, int> lastClipIndex = new Dictionary<OpponentMood, int>();
         private AudioSource[] pool;
         private int nextSource;
 
@@ -71,7 +74,11 @@ namespace Arena.UI
         {
             if (!clipsByMood.TryGetValue(mood, out var clips) || clips.Length == 0) return;
 
-            var clip = clips[Random.Range(0, clips.Length)];
+            int index = Random.Range(0, clips.Length);
+            if (clips.Length > 1 && lastClipIndex.TryGetValue(mood, out var last) && index == last)
+                index = (index + 1 + Random.Range(0, clips.Length - 1)) % clips.Length;
+            lastClipIndex[mood] = index;
+            var clip = clips[index];
             var tuning = Tuning[mood];
 
             var source = pool[nextSource];
