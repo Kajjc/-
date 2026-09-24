@@ -175,7 +175,9 @@ namespace Arena.UI
             var rowGo = new GameObject("SkillsRow", typeof(RectTransform));
             rowGo.transform.SetParent(root, false);
             var row = (RectTransform)rowGo.transform;
-            row.anchorMin = new Vector2(0.06f, y);
+            // Строка навыков выше остальных (0.06): иконка навыка в ней 60 px, а не 30.
+            // Расширяется вниз — над строкой стоит подпись "НАВЫКИ ИГРОКА".
+            row.anchorMin = new Vector2(0.06f, y - 0.03f);
             row.anchorMax = new Vector2(0.94f, y + 0.06f);
             row.offsetMin = Vector2.zero;
             row.offsetMax = Vector2.zero;
@@ -195,11 +197,14 @@ namespace Arena.UI
                 groupLayout.spacing = 6;
                 groupLayout.childAlignment = TextAnchor.MiddleLeft;
                 groupLayout.childForceExpandWidth = false;
-                groupLayout.childForceExpandHeight = true;
+                // Без растягивания по высоте: строка стала выше кнопок уровней (они иначе
+                // превратились бы в высокие прямоугольники) — все элементы группы
+                // держатся своей высоты и выравниваются по центру строки.
+                groupLayout.childForceExpandHeight = false;
                 groupLayout.childControlWidth = true;
                 groupLayout.childControlHeight = true;
 
-                Theme.CreateSkillIcon(groupGo.transform, skillId, 30f);
+                Theme.CreateSkillIcon(groupGo.transform, skillId, 60f);
 
                 var labelText = Theme.CreateText(groupGo.transform, "Label", 17, TextAnchor.MiddleLeft, Theme.Muted);
                 labelText.text = SkillLabels[s];
@@ -212,7 +217,10 @@ namespace Arena.UI
                     string capturedSkillId = skillId;
                     var btnGo = new GameObject($"{skillId}_{level}", typeof(RectTransform));
                     btnGo.transform.SetParent(groupGo.transform, false);
-                    btnGo.AddComponent<LayoutElement>().minWidth = 38;
+                    var btnLayout = btnGo.AddComponent<LayoutElement>();
+                    btnLayout.minWidth = 38;
+                    btnLayout.minHeight = 38;
+                    btnLayout.preferredHeight = 38;
                     var bg = btnGo.AddComponent<Image>();
                     var button = btnGo.AddComponent<Button>();
                     button.targetGraphic = bg;

@@ -70,8 +70,8 @@ namespace Arena.UI
         // Правый край роли/подписи настроения и левый край полосы навыков (иконка +
         // название + пипсы на каждый навык — она шире прежней полосы без иконок).
         // Между ними зазор 0.02, чтобы длинная роль не упиралась в иконки.
-        private const float TextColumnRight = 0.59f;
-        private const float PipsLeft = 0.61f;
+        private const float TextColumnRight = 0.61f;
+        private const float PipsLeft = 0.63f;
         private const float OutcomeIconSize = 72f;
 
         // Гипотеза Ю3 (docs/feature-hypotheses.md): реплики продублированы цифрами
@@ -416,14 +416,15 @@ namespace Arena.UI
             badgeLayout.childForceExpandHeight = true;
             badgeLayout.childControlWidth = true;
             badgeLayout.childControlHeight = true;
-            badgeGo.AddComponent<LayoutElement>().minWidth = 78;
+            badgeGo.AddComponent<LayoutElement>().minWidth = 108;
 
             // Иконка навыка на светлой плашке (Theme.CreateSkillIcon; пока файла нет —
-            // цветной квадрат акцента навыка) + уровень цветом навыка. Высота строки
-            // опции 58, поэтому иконка 34 — заметная, но не выше самой строки.
-            Theme.CreateSkillIcon(badgeGo.transform, requirement.skill, 34f);
+            // цветной квадрат акцента навыка) + уровень цветом навыка. Иконка 68 выше
+            // минимальной строки опции (58) — строка с заблокированной репликой при этом
+            // вырастает до ~80, остальные остаются прежними.
+            Theme.CreateSkillIcon(badgeGo.transform, requirement.skill, 68f);
 
-            var levelText = Theme.CreateText(badgeGo.transform, "Level", 20, TextAnchor.MiddleLeft, Theme.ForSkill(requirement.skill));
+            var levelText = Theme.CreateText(badgeGo.transform, "Level", 26, TextAnchor.MiddleLeft, Theme.ForSkill(requirement.skill));
             levelText.text = $"≥{requirement.level}";
         }
 
@@ -529,9 +530,9 @@ namespace Arena.UI
             var groupGo = new GameObject($"Pip_{skillId}", typeof(RectTransform));
             groupGo.transform.SetParent(pipsRow, false);
             var layout = groupGo.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 4;
+            layout.spacing = 8;
             layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = true;
+            layout.childForceExpandHeight = false;
             layout.childAlignment = TextAnchor.MiddleLeft;
             var sizeFit = groupGo.AddComponent<ContentSizeFitter>();
             sizeFit.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -540,18 +541,43 @@ namespace Arena.UI
 
             // Иконка + название: пипсы — единственное место, где игрок узнаёт, какая
             // иконка какому навыку соответствует (у заблокированных реплик рядом с
-            // иконкой только "≥N", без названия — Ю5).
-            Theme.CreateSkillIcon(groupGo.transform, skillId, 26f);
-            var labelText = Theme.CreateText(groupGo.transform, "Label", 15, TextAnchor.MiddleLeft, Theme.Muted);
+            // иконкой только "≥N", без названия — Ю5). Иконка крупная (52), поэтому
+            // название и уровень стоят справа от неё столбиком (название над пипсами),
+            // а не в одну строку — иначе три группы не помещаются в полосу навыков.
+            Theme.CreateSkillIcon(groupGo.transform, skillId, 52f);
+
+            var columnGo = new GameObject("NameAndLevel", typeof(RectTransform));
+            columnGo.transform.SetParent(groupGo.transform, false);
+            var column = columnGo.AddComponent<VerticalLayoutGroup>();
+            column.spacing = 4;
+            column.childAlignment = TextAnchor.MiddleLeft;
+            column.childForceExpandWidth = false;
+            column.childForceExpandHeight = false;
+            column.childControlWidth = true;
+            column.childControlHeight = true;
+
+            var labelText = Theme.CreateText(columnGo.transform, "Label", 15, TextAnchor.MiddleLeft, Theme.Muted);
             labelText.text = label;
+
+            var dotsGo = new GameObject("Dots", typeof(RectTransform));
+            dotsGo.transform.SetParent(columnGo.transform, false);
+            var dotsLayout = dotsGo.AddComponent<HorizontalLayoutGroup>();
+            dotsLayout.spacing = 4;
+            dotsLayout.childAlignment = TextAnchor.MiddleLeft;
+            dotsLayout.childForceExpandWidth = false;
+            dotsLayout.childForceExpandHeight = false;
+            dotsLayout.childControlWidth = true;
+            dotsLayout.childControlHeight = true;
 
             for (int i = 1; i <= 3; i++)
             {
                 var dotGo = new GameObject($"Dot{i}", typeof(RectTransform));
-                dotGo.transform.SetParent(groupGo.transform, false);
+                dotGo.transform.SetParent(dotsGo.transform, false);
                 var dotLayout = dotGo.AddComponent<LayoutElement>();
                 dotLayout.minWidth = 9;
-                dotLayout.minHeight = 9;
+                dotLayout.preferredWidth = 9;
+                dotLayout.minHeight = 24;
+                dotLayout.preferredHeight = 24;
                 var image = dotGo.AddComponent<Image>();
                 image.color = i <= level ? accent : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.15f);
             }

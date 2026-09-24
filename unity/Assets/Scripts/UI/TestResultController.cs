@@ -88,8 +88,10 @@ namespace Arena.UI
             var rowGo = new GameObject("SkillsRow", typeof(RectTransform));
             rowGo.transform.SetParent(root, false);
             var row = (RectTransform)rowGo.transform;
-            row.anchorMin = new Vector2(0.15f, 0.55f);
-            row.anchorMax = new Vector2(0.85f, 0.72f);
+            // Чипы выше прежних (0.55-0.72): иконка навыка в них 128 px, а в широком окне
+            // (канвас ~2.4:1, высота ~650) 0.17 высоты — это всего ~110 px.
+            row.anchorMin = new Vector2(0.15f, 0.51f);
+            row.anchorMax = new Vector2(0.85f, 0.74f);
             row.offsetMin = Vector2.zero;
             row.offsetMax = Vector2.zero;
             var layout = rowGo.AddComponent<HorizontalLayoutGroup>();
@@ -107,7 +109,7 @@ namespace Arena.UI
             var card = Theme.CreatePanel(root, "RecommendedCard",
                 new Color(Theme.Amber.r, Theme.Amber.g, Theme.Amber.b, 0.12f));
             card.anchorMin = new Vector2(0.1f, 0.20f);
-            card.anchorMax = new Vector2(0.9f, 0.50f);
+            card.anchorMax = new Vector2(0.9f, 0.49f);
             card.offsetMin = Vector2.zero;
             card.offsetMax = Vector2.zero;
 
@@ -165,15 +167,15 @@ namespace Arena.UI
 
             // Иконка навыка слева, название и уровень справа от неё; вся связка — по центру чипа.
             var chipLayout = go.AddComponent<HorizontalLayoutGroup>();
-            chipLayout.padding = new RectOffset(16, 16, 10, 10);
-            chipLayout.spacing = 16;
+            chipLayout.padding = new RectOffset(16, 16, 6, 6);
+            chipLayout.spacing = 20;
             chipLayout.childAlignment = TextAnchor.MiddleCenter;
             chipLayout.childForceExpandWidth = false;
             chipLayout.childForceExpandHeight = false;
             chipLayout.childControlWidth = true;
             chipLayout.childControlHeight = true;
 
-            Theme.CreateSkillIcon(go.transform, skillId, 64f);
+            Theme.CreateSkillIcon(go.transform, skillId, 128f);
 
             var txt = Theme.CreateText(go.transform, "Label", 22, TextAnchor.MiddleLeft, accent);
             txt.text = $"{label}\n{level}";
