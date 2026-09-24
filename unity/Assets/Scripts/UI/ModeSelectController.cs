@@ -35,7 +35,7 @@ namespace Arena.UI
             if (root != null) return;
 
             root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: true);
-            Theme.SetCanvasBackground(root, "Backgrounds/title");
+            Theme.SetCanvasBackground(root, "Backgrounds/title", scrimAlpha: 0.2f);
 
             var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleCenter, Theme.Amber);
             eyebrow.text = "АРЕНА ПЕРЕГОВОРОВ";

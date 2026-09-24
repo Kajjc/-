@@ -287,22 +287,57 @@ namespace Arena.UI
         // Ищет дочернюю панель "Background" (её создаёт CreateCanvas) и либо ставит
         // на неё реальный фон, либо возвращает к сплошному Navy, если ассета нет —
         // безопасно вызывать повторно (например, при смене сценария).
-        public static void SetCanvasBackground(RectTransform canvasRoot, string resourcePath)
+        //
+        // Настоящий фон масштабируется по принципу "cover" (AspectRatioFitter в режиме
+        // EnvelopeParent): заполняет экран целиком без искажения при любом соотношении
+        // сторон окна, лишнее по краям просто уходит за экран. Референс канваса 16:10,
+        // а арт может быть 16:9 (сейчас 1672x941) — простое растягивание исказило бы
+        // картинку. scrimAlpha — затемняющая подложка цвета Navy поверх картинки: весь
+        // текст интерфейса светлый и рисуется прямо на фоне, а на ярких кадрах (небо,
+        // экран презентации) без затемнения контраст падал до ~1.2:1.
+        public static void SetCanvasBackground(RectTransform canvasRoot, string resourcePath, float scrimAlpha = 0f)
         {
             var backgroundTransform = canvasRoot.Find("Background");
             if (backgroundTransform == null) return;
             var image = backgroundTransform.GetComponent<Image>();
+            var fitter = backgroundTransform.GetComponent<AspectRatioFitter>();
             var sprite = TryLoadSprite(resourcePath);
             if (sprite != null)
             {
                 image.sprite = sprite;
                 image.color = Color.white;
+                if (fitter == null) fitter = backgroundTransform.gameObject.AddComponent<AspectRatioFitter>();
+                fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+                fitter.aspectRatio = sprite.rect.width / sprite.rect.height;
+                fitter.enabled = true;
             }
             else
             {
                 image.sprite = null;
                 image.color = Navy;
+                if (fitter != null)
+                {
+                    fitter.enabled = false;
+                    StretchFull((RectTransform)backgroundTransform);
+                }
             }
+            SetScrim(canvasRoot, sprite != null ? scrimAlpha : 0f);
+        }
+
+        // Создаётся лениво, сразу над Background и под остальным содержимым канваса.
+        private static void SetScrim(RectTransform canvasRoot, float alpha)
+        {
+            var scrimTransform = canvasRoot.Find("Scrim");
+            if (scrimTransform == null)
+            {
+                if (alpha <= 0f) return;
+                var scrim = CreatePanel(canvasRoot, "Scrim", Color.clear);
+                StretchFull(scrim);
+                scrim.GetComponent<Image>().raycastTarget = false;
+                scrim.SetSiblingIndex(canvasRoot.Find("Background").GetSiblingIndex() + 1);
+                scrimTransform = scrim;
+            }
+            scrimTransform.GetComponent<Image>().color = new Color(Navy.r, Navy.g, Navy.b, alpha);
         }
 
         // Карточка-опция с акцентной полосой сверху, заголовком и подписью —
@@ -310,7 +345,11 @@ namespace Arena.UI
         public static void CreateOptionCard(Transform parent, float anchorMinX, float anchorMaxX, float anchorMinY, float anchorMaxY,
             string title, string subtitle, Color accent, UnityEngine.Events.UnityAction onClick)
         {
-            var card = CreatePanel(parent, $"Option_{title}", new Color(Parchment.r, Parchment.g, Parchment.b, 0.05f));
+            // Тёмная полупрозрачная плашка, а не почти прозрачная светлая (было
+            // Parchment @ 0.05): карточки лежат поверх арта главного меню (закат и
+            // силуэты как раз в их зоне), и светлый текст на ярком небе не читался бы.
+            // Над однотонным Navy (если арта нет) плашка чуть темнее фона — видна.
+            var card = CreatePanel(parent, $"Option_{title}", new Color(0.04f, 0.07f, 0.13f, 0.55f));
             card.anchorMin = new Vector2(anchorMinX, anchorMinY);
             card.anchorMax = new Vector2(anchorMaxX, anchorMaxY);
             card.offsetMin = Vector2.zero;

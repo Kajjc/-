@@ -383,7 +383,7 @@ namespace Arena.UI
             // приходится 3 сценария (лёгкий/средний/сложный) с одним и тем же
             // персонажем/обстановкой — незачем просить команду рисовать 3x ассетов.
             var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere) ?? engine.Scenario.meta.id;
-            Theme.SetCanvasBackground(root, $"Backgrounds/{domainKey}");
+            Theme.SetCanvasBackground(root, $"Backgrounds/{domainKey}", scrimAlpha: 0.6f);
         }
 
         // Гипотеза Ю7: портрет по настроению (Resources/Portraits/<домен>_<настроение>.png,
