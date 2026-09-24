@@ -10,7 +10,7 @@
    Фон вычищается заливкой от краёв кадра по нейтральным (почти без цвета) светлым
    пикселям; белая блузка/светлые детали внутри фигуры не затрагиваются, потому что
    до них залив от краёв не дотягивается. Если у файла уже есть настоящий альфа-
-   канал, этот шаг пропускается.
+   канал, этот шаг пропускается. Принимает и PNG, и JPG (результат всегда PNG).
 2. Кадрирование "голова и плечи" под слот портрета в диалоге (~1.35:1, см.
    DialogueUIController: портрет 0.11 x 0.13 канваса 1280x800). Портреты приходят
    квадратными с половиной тела, а слот маленький (~140x104), поэтому лицо иначе
@@ -37,7 +37,7 @@ SLOT_ASPECT = 140.8 / 104.0   # ширина/высота слота портр�
 CROP_HEIGHT_FRACTION = 0.56   # доля высоты исходника от макушки: голова+плечи
 OUT_WIDTH = 640
 
-MIN_BRIGHTNESS = 185          # серая клетка шахматки светлее этого
+MIN_BRIGHTNESS = 165          # серая клетка шахматки светлее этого (JPG даёт шум ниже)
 MAX_SATURATION = 10           # фон нейтральный: max(R,G,B) - min(R,G,B) мал
 POCKET_MIN_AREA = 30          # карман шахматки внутри фигуры: не меньше и не больше
 POCKET_MAX_AREA = 12000       # (белая блузка на порядок крупнее)
@@ -57,9 +57,12 @@ def background_mask(rgb):
     candidate = (brightness >= MIN_BRIGHTNESS) & (saturation <= MAX_SATURATION)
 
     h, w = candidate.shape
+    # Заливка стартует с верхнего, левого и правого краёв, но НЕ с нижнего: портрет
+    # обрезан по грудь, и внизу кадра, как правило, фигура (например, белая рубашка,
+    # доходящая до нижней границы) — через неё залив съел бы светлую одежду изнутри.
+    # Углы внизу всё равно достаются заливкой с боков.
     reached = np.zeros_like(candidate)
     reached[0, :] = candidate[0, :]
-    reached[-1, :] = candidate[-1, :]
     reached[:, 0] = candidate[:, 0]
     reached[:, -1] = candidate[:, -1]
 
@@ -154,9 +157,10 @@ def main():
 
     os.makedirs(args.out_dir, exist_ok=True)
     for path in args.inputs:
-        out_path = os.path.join(args.out_dir, os.path.basename(path))
+        out_name = os.path.splitext(os.path.basename(path))[0] + ".png"
+        out_path = os.path.join(args.out_dir, out_name)
         size = prepare(path, out_path)
-        print(f"{os.path.basename(path)} -> {size[0]}x{size[1]}")
+        print(f"{os.path.basename(path)} -> {out_name} {size[0]}x{size[1]}")
 
 
 if __name__ == "__main__":
