@@ -37,19 +37,46 @@ namespace Arena.UI
             root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: true);
             Theme.SetCanvasBackground(root, "Backgrounds/title", scrimAlpha: 0.2f);
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleCenter, Theme.Amber);
-            eyebrow.text = "АРЕНА ПЕРЕГОВОРОВ";
-            var eyebrowRect = eyebrow.rectTransform;
-            eyebrowRect.anchorMin = new Vector2(0.1f, 0.68f);
-            eyebrowRect.anchorMax = new Vector2(0.9f, 0.75f);
-            eyebrowRect.offsetMin = Vector2.zero;
-            eyebrowRect.offsetMax = Vector2.zero;
+            // Логотип (Resources/Icons/logo.png, подготовлен scripts/prepare_logo.py —
+            // надпись в нём перекрашена в светлый, иначе на тёмном меню пропадает) —
+            // сверху по центру. Коробка задаёт максимальную область, а сама картинка
+            // вписывается в неё с сохранением пропорций (preserveAspect), поэтому не
+            // растягивается при любой форме окна. Если файла нет — прежняя текстовая
+            // надпись "АРЕНА ПЕРЕГОВОРОВ" на своём месте.
+            var logoSprite = Theme.TryLoadSprite("Icons/logo");
+            float titleMinY, titleMaxY;
+            if (logoSprite != null)
+            {
+                var logoRect = Theme.CreatePanel(root, "Logo", Color.white);
+                logoRect.anchorMin = new Vector2(0.25f, 0.665f);
+                logoRect.anchorMax = new Vector2(0.75f, 0.985f);
+                logoRect.offsetMin = Vector2.zero;
+                logoRect.offsetMax = Vector2.zero;
+                var logoImage = logoRect.GetComponent<UnityEngine.UI.Image>();
+                logoImage.sprite = logoSprite;
+                logoImage.preserveAspect = true;
+                logoImage.raycastTarget = false;
+                titleMinY = 0.56f;
+                titleMaxY = 0.65f;
+            }
+            else
+            {
+                var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleCenter, Theme.Amber);
+                eyebrow.text = "АРЕНА ПЕРЕГОВОРОВ";
+                var eyebrowRect = eyebrow.rectTransform;
+                eyebrowRect.anchorMin = new Vector2(0.1f, 0.68f);
+                eyebrowRect.anchorMax = new Vector2(0.9f, 0.75f);
+                eyebrowRect.offsetMin = Vector2.zero;
+                eyebrowRect.offsetMax = Vector2.zero;
+                titleMinY = 0.58f;
+                titleMaxY = 0.68f;
+            }
 
             var title = Theme.CreateText(root, "Title", 30, TextAnchor.MiddleCenter, Theme.Parchment);
             title.text = "С чего начнём?";
             var titleRect = title.rectTransform;
-            titleRect.anchorMin = new Vector2(0.1f, 0.58f);
-            titleRect.anchorMax = new Vector2(0.9f, 0.68f);
+            titleRect.anchorMin = new Vector2(0.1f, titleMinY);
+            titleRect.anchorMax = new Vector2(0.9f, titleMaxY);
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
