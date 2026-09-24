@@ -284,6 +284,50 @@ namespace Arena.UI
         // (Resources/Portraits|Backgrounds|Icons/<имя>.png) — null, если файла ещё нет.
         public static Sprite TryLoadSprite(string resourcePath) => Resources.Load<Sprite>(resourcePath);
 
+        // Иконка навыка (Resources/Icons/skill_<napor|empatiya|logika>.png) для строк
+        // с лэйаут-группой. Возвращает "держатель" фиксированного предпочтительного
+        // размера — группа с childForceExpandHeight растягивает его по высоте строки,
+        // поэтому сама иконка лежит в нём квадратом size x size по центру и не
+        // вытягивается. Иконка сидит на светлой плашке: часть арта тёмная ("Логика" —
+        // тёмно-синие весы) и без подложки теряется на тёмном фоне игры. Если файла
+        // ещё нет — вместо иконки цветной квадрат акцента навыка (как пипсы).
+        public static RectTransform CreateSkillIcon(Transform parent, string skillId, float size)
+        {
+            var holderGo = new GameObject($"SkillIcon_{skillId}", typeof(RectTransform));
+            holderGo.transform.SetParent(parent, false);
+            var holderLayout = holderGo.AddComponent<LayoutElement>();
+            holderLayout.minWidth = size;
+            holderLayout.preferredWidth = size;
+            holderLayout.minHeight = size;
+            holderLayout.preferredHeight = size;
+
+            var plateRect = CreatePanel(holderGo.transform, "Plate", ForSkill(skillId));
+            plateRect.anchorMin = new Vector2(0.5f, 0.5f);
+            plateRect.anchorMax = new Vector2(0.5f, 0.5f);
+            plateRect.pivot = new Vector2(0.5f, 0.5f);
+            plateRect.anchoredPosition = Vector2.zero;
+            plateRect.sizeDelta = new Vector2(size, size);
+            var plate = plateRect.GetComponent<Image>();
+            plate.raycastTarget = false;
+
+            var sprite = TryLoadSprite($"Icons/skill_{skillId}");
+            if (sprite == null) return (RectTransform)holderGo.transform;
+
+            plate.color = new Color(Parchment.r, Parchment.g, Parchment.b, 0.92f);
+            var glyphGo = new GameObject("Glyph", typeof(RectTransform));
+            glyphGo.transform.SetParent(plateRect, false);
+            var glyphRect = (RectTransform)glyphGo.transform;
+            StretchFull(glyphRect);
+            var inset = Mathf.Max(2f, size * 0.1f);
+            glyphRect.offsetMin = new Vector2(inset, inset);
+            glyphRect.offsetMax = new Vector2(-inset, -inset);
+            var glyph = glyphGo.AddComponent<Image>();
+            glyph.sprite = sprite;
+            glyph.preserveAspect = true;
+            glyph.raycastTarget = false;
+            return (RectTransform)holderGo.transform;
+        }
+
         // Ищет дочернюю панель "Background" (её создаёт CreateCanvas) и либо ставит
         // на неё реальный фон, либо возвращает к сплошному Navy, если ассета нет —
         // безопасно вызывать повторно (например, при смене сценария).

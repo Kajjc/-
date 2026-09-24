@@ -99,9 +99,9 @@ namespace Arena.UI
             layout.childControlWidth = true;
             layout.childControlHeight = true;
 
-            AddSkillChip(row, "Напор", skills.napor, Theme.ForSkill("napor"));
-            AddSkillChip(row, "Эмпатия", skills.empatiya, Theme.ForSkill("empatiya"));
-            AddSkillChip(row, "Логика", skills.logika, Theme.ForSkill("logika"));
+            AddSkillChip(row, "Напор", "napor", skills.napor, Theme.ForSkill("napor"));
+            AddSkillChip(row, "Эмпатия", "empatiya", skills.empatiya, Theme.ForSkill("empatiya"));
+            AddSkillChip(row, "Логика", "logika", skills.logika, Theme.ForSkill("logika"));
 
             // --- Рекомендованная карточка ---
             var card = Theme.CreatePanel(root, "RecommendedCard",
@@ -156,16 +156,27 @@ namespace Arena.UI
             configRect.offsetMax = Vector2.zero;
         }
 
-        private void AddSkillChip(Transform parent, string label, int level, Color accent)
+        private void AddSkillChip(Transform parent, string label, string skillId, int level, Color accent)
         {
             var go = new GameObject($"Chip_{label}", typeof(RectTransform));
             go.transform.SetParent(parent, false);
             var bg = go.AddComponent<Image>();
             bg.color = new Color(accent.r, accent.g, accent.b, 0.18f);
 
-            var txt = Theme.CreateText(go.transform, "Label", 22, TextAnchor.MiddleCenter, accent);
+            // Иконка навыка слева, название и уровень справа от неё; вся связка — по центру чипа.
+            var chipLayout = go.AddComponent<HorizontalLayoutGroup>();
+            chipLayout.padding = new RectOffset(16, 16, 10, 10);
+            chipLayout.spacing = 16;
+            chipLayout.childAlignment = TextAnchor.MiddleCenter;
+            chipLayout.childForceExpandWidth = false;
+            chipLayout.childForceExpandHeight = false;
+            chipLayout.childControlWidth = true;
+            chipLayout.childControlHeight = true;
+
+            Theme.CreateSkillIcon(go.transform, skillId, 64f);
+
+            var txt = Theme.CreateText(go.transform, "Label", 22, TextAnchor.MiddleLeft, accent);
             txt.text = $"{label}\n{level}";
-            Theme.StretchFull(txt.rectTransform);
         }
     }
 }

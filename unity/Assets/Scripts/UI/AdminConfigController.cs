@@ -199,6 +199,8 @@ namespace Arena.UI
                 groupLayout.childControlWidth = true;
                 groupLayout.childControlHeight = true;
 
+                Theme.CreateSkillIcon(groupGo.transform, skillId, 30f);
+
                 var labelText = Theme.CreateText(groupGo.transform, "Label", 17, TextAnchor.MiddleLeft, Theme.Muted);
                 labelText.text = SkillLabels[s];
                 labelText.gameObject.AddComponent<LayoutElement>().minWidth = 92;

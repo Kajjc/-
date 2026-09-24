@@ -67,6 +67,12 @@ namespace Arena.UI
         private const float PortraitTop = 0.955f;
         private const float PortraitAspect = 1.2f;
         private const float TextColumnLeft = 0.235f;
+        // Правый край роли/подписи настроения и левый край полосы навыков (иконка +
+        // название + пипсы на каждый навык — она шире прежней полосы без иконок).
+        // Между ними зазор 0.02, чтобы длинная роль не упиралась в иконки.
+        private const float TextColumnRight = 0.59f;
+        private const float PipsLeft = 0.61f;
+        private const float OutcomeIconSize = 72f;
 
         // Гипотеза Ю3 (docs/feature-hypotheses.md): реплики продублированы цифрами
         // и доступны с клавиатуры — быстрее и увереннее на питч-сессии, чем клики
@@ -152,9 +158,9 @@ namespace Arena.UI
             moodBarImage = moodBarRect.GetComponent<Image>();
 
             // Текстовая колонка справа от портрета, сверху вниз: роль -> подпись
-            // настроения -> реплика оппонента. Правая граница роли/настроения (0.64)
-            // оставляет зазор до полосы навыков (она прижата к правому краю и занимает
-            // ~0.67-0.95 при канвасе 16:10).
+            // настроения -> реплика оппонента. Правая граница роли/настроения
+            // (TextColumnRight) оставляет зазор до полосы навыков (PipsLeft), которая
+            // прижата к правому краю.
             //
             // Подпись настроения: цвет настроения на тёмном фоне читался плохо (бирюзовый
             // "Спокоен" сливался со сценой), поэтому сам текст — светлый Parchment, как
@@ -164,7 +170,7 @@ namespace Arena.UI
             moodChip.transform.SetParent(root, false);
             var moodChipRect = (RectTransform)moodChip.transform;
             moodChipRect.anchorMin = new Vector2(TextColumnLeft, 0.84f);
-            moodChipRect.anchorMax = new Vector2(0.64f, 0.885f);
+            moodChipRect.anchorMax = new Vector2(TextColumnRight, 0.885f);
             moodChipRect.offsetMin = Vector2.zero;
             moodChipRect.offsetMax = Vector2.zero;
 
@@ -190,19 +196,19 @@ namespace Arena.UI
             opponentRoleText.fontSizeMax = 20;
             var roleRect = opponentRoleText.rectTransform;
             roleRect.anchorMin = new Vector2(TextColumnLeft, 0.885f);
-            roleRect.anchorMax = new Vector2(0.64f, PortraitTop);
+            roleRect.anchorMax = new Vector2(TextColumnRight, PortraitTop);
             roleRect.offsetMin = Vector2.zero;
             roleRect.offsetMax = Vector2.zero;
 
             var pipsGo = new GameObject("Pips", typeof(RectTransform));
             pipsGo.transform.SetParent(root, false);
             pipsRow = (RectTransform)pipsGo.transform;
-            pipsRow.anchorMin = new Vector2(0.6f, 0.86f);
+            pipsRow.anchorMin = new Vector2(PipsLeft, 0.86f);
             pipsRow.anchorMax = new Vector2(0.95f, 0.95f);
             pipsRow.offsetMin = Vector2.zero;
             pipsRow.offsetMax = Vector2.zero;
             var pipsLayout = pipsGo.AddComponent<HorizontalLayoutGroup>();
-            pipsLayout.spacing = 18;
+            pipsLayout.spacing = 12;
             pipsLayout.childAlignment = TextAnchor.MiddleRight;
             pipsLayout.childForceExpandWidth = false;
             pipsLayout.childForceExpandHeight = true;
@@ -246,11 +252,17 @@ namespace Arena.UI
             Theme.StretchFull(endPanel);
             endPanel.gameObject.SetActive(false);
 
+            // Значок исхода: Resources/Icons/outcome_<win|compromise|fail>.png (цветной
+            // квадрат акцента исхода, если файла нет — RenderEndScreen). Фиксированный
+            // квадрат, а не доли канваса: раньше плашка была процентной и на нестандартном
+            // окне вытягивалась бы вместе с картинкой. Верхний левый угол — там же, где был
+            // прежний бейдж, заголовок исхода стоит правее.
             outcomeBadge = Theme.CreatePanel(endPanel, "OutcomeBadge", Theme.Amber);
-            outcomeBadge.anchorMin = new Vector2(0.06f, 0.84f);
-            outcomeBadge.anchorMax = new Vector2(0.13f, 0.93f);
-            outcomeBadge.offsetMin = Vector2.zero;
-            outcomeBadge.offsetMax = Vector2.zero;
+            outcomeBadge.anchorMin = new Vector2(0.06f, 0.93f);
+            outcomeBadge.anchorMax = new Vector2(0.06f, 0.93f);
+            outcomeBadge.pivot = new Vector2(0f, 1f);
+            outcomeBadge.anchoredPosition = Vector2.zero;
+            outcomeBadge.sizeDelta = new Vector2(OutcomeIconSize, OutcomeIconSize);
 
             endTitleText = Theme.CreateText(endPanel, "EndTitle", 32, TextAnchor.MiddleLeft, Theme.Parchment);
             var titleRect = endTitleText.rectTransform;
@@ -404,30 +416,14 @@ namespace Arena.UI
             badgeLayout.childForceExpandHeight = true;
             badgeLayout.childControlWidth = true;
             badgeLayout.childControlHeight = true;
-            badgeGo.AddComponent<LayoutElement>().minWidth = 62;
+            badgeGo.AddComponent<LayoutElement>().minWidth = 78;
 
-            var accent = Theme.ForSkill(requirement.skill);
+            // Иконка навыка на светлой плашке (Theme.CreateSkillIcon; пока файла нет —
+            // цветной квадрат акцента навыка) + уровень цветом навыка. Высота строки
+            // опции 58, поэтому иконка 34 — заметная, но не выше самой строки.
+            Theme.CreateSkillIcon(badgeGo.transform, requirement.skill, 34f);
 
-            var iconGo = new GameObject("Icon", typeof(RectTransform));
-            iconGo.transform.SetParent(badgeGo.transform, false);
-            var iconLayout = iconGo.AddComponent<LayoutElement>();
-            iconLayout.minWidth = 16;
-            iconLayout.minHeight = 16;
-            var iconImage = iconGo.AddComponent<Image>();
-            var sprite = Theme.TryLoadSprite($"Icons/skill_{requirement.skill}");
-            if (sprite != null)
-            {
-                iconImage.sprite = sprite;
-                iconImage.color = Color.white;
-            }
-            else
-            {
-                // Реальной иконки ещё нет (docs/team-plan.md) — цветной квадрат того
-                // же акцента, что и пипсы навыков, как временная замена.
-                iconImage.color = accent;
-            }
-
-            var levelText = Theme.CreateText(badgeGo.transform, "Level", 15, TextAnchor.MiddleLeft, accent);
+            var levelText = Theme.CreateText(badgeGo.transform, "Level", 20, TextAnchor.MiddleLeft, Theme.ForSkill(requirement.skill));
             levelText.text = $"≥{requirement.level}";
         }
 
@@ -541,9 +537,13 @@ namespace Arena.UI
             sizeFit.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var accent = Theme.ForSkill(skillId);
+
+            // Иконка + название: пипсы — единственное место, где игрок узнаёт, какая
+            // иконка какому навыку соответствует (у заблокированных реплик рядом с
+            // иконкой только "≥N", без названия — Ю5).
+            Theme.CreateSkillIcon(groupGo.transform, skillId, 26f);
             var labelText = Theme.CreateText(groupGo.transform, "Label", 15, TextAnchor.MiddleLeft, Theme.Muted);
             labelText.text = label;
-            labelText.gameObject.AddComponent<LayoutElement>().minWidth = 72;
 
             for (int i = 1; i <= 3; i++)
             {
@@ -634,7 +634,11 @@ namespace Arena.UI
         private void RenderEndScreen()
         {
             var node = engine.CurrentNode;
-            outcomeBadge.GetComponent<Image>().color = Theme.ForOutcome(node.outcome);
+            var outcomeImage = outcomeBadge.GetComponent<Image>();
+            var outcomeSprite = Theme.TryLoadSprite($"Icons/outcome_{node.outcome}");
+            outcomeImage.sprite = outcomeSprite;
+            outcomeImage.preserveAspect = outcomeSprite != null;
+            outcomeImage.color = outcomeSprite != null ? Color.white : Theme.ForOutcome(node.outcome);
             endTitleText.text = OutcomeTitle(node.outcome);
 
             foreach (Transform child in endContent) Destroy(child.gameObject);
