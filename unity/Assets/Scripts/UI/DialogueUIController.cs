@@ -16,14 +16,8 @@ namespace Arena.UI
         private DialogueEngine engine;
         private Action onRequestNewScenario;
 
-        // Гипотеза Г8 (docs/feature-hypotheses.md): этот контроллер не пересоздаётся
-        // между "Пройти ещё раз"/"Другой сценарий" (только engine пересоздаётся в
-        // StartScenario), поэтому один и тот же профиль естественно копит данные по
-        // всем прогонам за сессию, без отдельного хранилища на уровне GameFlow.
         private readonly NegotiatorProfile profile = new NegotiatorProfile();
 
-        // Гипотеза Г5 (docs/feature-hypotheses.md) — экран итога передаёт сюда теги
-        // техник, реально встретившихся в прохождении; связывает GameFlow.
         public Action<IEnumerable<string>> OnOpenTheory;
 
         private RectTransform root;
@@ -41,16 +35,11 @@ namespace Arena.UI
         private TMP_Text endTitleText;
         private RectTransform endContent;
 
-        // Гипотеза К2 (docs/feature-hypotheses.md): плавный fade между репликами
-        // вместо мгновенной подмены текста — интерфейс ощущается более "живым".
         private CanvasGroup opponentTextGroup;
         private CanvasGroup optionsGroup;
         private bool isTransitioning;
         private const float FadeDuration = 0.15f;
 
-        // Гипотеза Ю3 (docs/feature-hypotheses.md): реплики продублированы цифрами
-        // и доступны с клавиатуры — быстрее и увереннее на питч-сессии, чем клики
-        // мышью. Список в том же порядке, что и кнопки на экране.
         private readonly List<DialogueOption> currentOptions = new List<DialogueOption>();
 
         public GameObject Root => root != null ? root.gameObject : null;
@@ -76,8 +65,6 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "DialogueCanvas");
 
-            // Портрет: пробует Resources/Portraits/<id сценария>.png (см. docs/team-plan.md);
-            // если файла нет — градиентная плашка-заглушка вместо реального портрета.
             portrait = Theme.CreatePanel(root, "Portrait", Theme.Slate);
             portraitImage = portrait.GetComponent<Image>();
             portrait.anchorMin = new Vector2(0.05f, 0.82f);
@@ -91,16 +78,6 @@ namespace Arena.UI
             portraitTintRect.offsetMax = Vector2.zero;
             portraitTint = portraitTintRect.gameObject;
 
-            // Гипотеза Ю7-вариант-А: акцентная полоса поверх нижнего края портрета
-            // (тот же приём, что AccentBar у карточек на экране выбора режима) +
-            // короткая подпись под именем роли. Обновляется в Render() по
-            // GetOpponentMood(). Полоса — ребёнок portrait (не root), в его же
-            // локальных координатах, поэтому не зависит от того, есть ли уже
-            // настоящий арт портрета — виден он и на плашке-заглушке, и поверх
-            // реального изображения; подпись — в свободном промежутке между
-            // именем роли и репликой оппонента, а не под портретом (там места
-            // впритык — первая строка реплики перекрывала бы её, что и
-            // обнаружилось на скриншоте живого прогона).
             var moodBarRect = Theme.CreatePanel(portrait, "MoodBar", Theme.Teal);
             moodBarRect.anchorMin = new Vector2(0f, 0f);
             moodBarRect.anchorMax = new Vector2(1f, 0.1f);
@@ -180,15 +157,6 @@ namespace Arena.UI
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            // Единый прокручиваемый блок (описание исхода -> баллы -> сильные
-            // стороны -> над чем поработать) вместо жёстких процентных зон —
-            // гипотеза Ю2 (docs/feature-hypotheses.md), методология —
-            // docs/eval-rubric.md §3.2. Раньше описание исхода (node.summary)
-            // рисовалось в отдельном блоке с фиксированной высотой на глаз —
-            // после углубления сценариев длинные сводки стали переполнять эту
-            // высоту и наезжать на разделы ниже (баллы по техникам и т.д.),
-            // которые сами не сдвигались. Теперь оно — первая строка того же
-            // прокручиваемого списка, высота считается автоматически.
             var scrollRoot = Theme.CreateScrollList(endPanel, "EndScroll", out endContent);
             scrollRoot.anchorMin = new Vector2(0.06f, 0.16f);
             scrollRoot.anchorMax = new Vector2(0.94f, 0.82f);
@@ -265,9 +233,6 @@ namespace Arena.UI
             }
         }
 
-        // Гипотеза Ю5 (docs/feature-hypotheses.md): вместо текста "Требуется: Логика ≥2"
-        // — цветная иконка навыка (или, пока реальных ассетов нет, цветной квадрат того
-        // же акцента, что и пипсы навыков) + "≥N". Считывается быстрее, чем текст целиком.
         private void CreateOptionButton(int number, DialogueOption option, bool available, UnityEngine.Events.UnityAction onClick)
         {
             var fill = available
@@ -332,8 +297,6 @@ namespace Arena.UI
             }
             else
             {
-                // Реальной иконки ещё нет (docs/team-plan.md) — цветной квадрат того
-                // же акцента, что и пипсы навыков, как временная замена.
                 iconImage.color = accent;
             }
 
@@ -341,24 +304,12 @@ namespace Arena.UI
             levelText.text = $"≥{requirement.level}";
         }
 
-        // Ищет Resources/Backgrounds/<id>.png по домену текущего сценария
-        // (docs/team-plan.md фиксирует конвенцию имён) — если файла нет, остаётся
-        // сплошной Navy, ничего не ломается. Портрет теперь обновляется отдельно,
-        // на каждом ходу, — см. UpdatePortraitSprite (зависит от настроения).
         private void UpdateBackground()
         {
-            // По домену (сфере), а не по конкретному сценарию: с Г2 на каждый домен
-            // приходится 3 сценария (лёгкий/средний/сложный) с одним и тем же
-            // персонажем/обстановкой — незачем просить команду рисовать 3x ассетов.
             var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere) ?? engine.Scenario.meta.id;
             Theme.SetCanvasBackground(root, $"Backgrounds/{domainKey}");
         }
 
-        // Гипотеза Ю7: портрет по настроению (Resources/Portraits/<домен>_<настроение>.png,
-        // например hr_irritated.png) — пока нарисованы схематичные плейсхолдеры только для
-        // HR, на остальные домены откатывается на прежний нейтральный Portraits/<домен>.png,
-        // а если и его нет — на плашку-заглушку. Ничего не ломается по мере добавления
-        // реальных ассетов постепенно, домен за доменом.
         private void UpdatePortraitSprite(string moodSuffix)
         {
             var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere) ?? engine.Scenario.meta.id;
@@ -388,10 +339,6 @@ namespace Arena.UI
             AddPipGroup("Логика", "logika", engine.Skills.logika);
         }
 
-        // Гипотеза Ю7-вариант-А: видимая реакция оппонента на последний ход игрока
-        // (docs/feature-hypotheses.md). Полоса под портретом + короткая подпись,
-        // цвет — уже принятая в docs/visual-style-guide.md семантика (Sage=win,
-        // Amber=compromise, Coral=fail), без единого нового арт-ассета.
         private void RenderMood()
         {
             var mood = engine.GetOpponentMood();
@@ -464,8 +411,6 @@ namespace Arena.UI
             StartCoroutine(RenderWithFade());
         }
 
-        // К2: реплика и варианты ответа гаснут, меняются под скрытием и проявляются
-        // заново — вместо мгновенной подмены текста при выборе реплики.
         private IEnumerator RenderWithFade()
         {
             isTransitioning = true;
@@ -504,10 +449,6 @@ namespace Arena.UI
             foreach (var t in taxonomy.techniques) byId[t.id] = t;
             var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere);
 
-            // Бейджу "Повтор" и остальным достижениям нужен уже обновлённый
-            // NegotiatorProfile (в частности RunCount, включающий этот прогон) —
-            // поэтому запись в профиль перенесена в самое начало, до рендера, и
-            // выполняется ДО оценки бейджей (а не после, как раньше в этом методе).
             profile.RecordRun(engine.Skills, engine.TechniqueScores, engine.Transcript.Select(s => s.ChosenOption.technique));
             var newlyEarnedBadges = EvaluateNewlyEarnedBadges();
 
@@ -517,7 +458,7 @@ namespace Arena.UI
             AddBadgesSection(newlyEarnedBadges);
 
             AddSectionLabel("БАЛЛЫ ПО ТЕХНИКАМ");
-            AddScoreChipsRow();
+            AddScoreChipsRow(byId);
 
             AddTechniqueTimelineSection();
 
@@ -541,10 +482,6 @@ namespace Arena.UI
                 foreach (var step in improvements) AddQuoteCard(step, byId, isStrength: false);
         }
 
-        // Деление таксономии на две семьи техник (docs/technique-taxonomy.json) —
-        // ровно техники с диапазоном только "+" и только "-", без пересечений и
-        // без нейтральных: соответствует делению Fisher & Ury на принципиальные
-        // переговоры vs позиционный торг. Используется в BuildStrategyNarrative (Ю6).
         private static readonly HashSet<string> PrincipledTechniqueIds = new HashSet<string>
         {
             "state_interest", "objective_criteria", "open_question", "active_listening",
@@ -556,14 +493,6 @@ namespace Arena.UI
             "position_push", "escalate", "personal_attack", "empty_threat", "vague_claim", "give_up"
         };
 
-        // Гипотеза "Профиль переговорщика (архетип)": та же таксономия из 15 техник,
-        // но перегруппирована по стилю поведения на 5 архетипов вместо 2 семей выше
-        // (принципиальные/позиционные — про качество аргументации, архетип — про
-        // манеру вести разговор). Архетип определяется по ЧАСТОТЕ выбора техники, а
-        // не по сумме баллов — так нагляднее для игрока ("5 раз уступил"), и разбиение
-        // на принципиальные/позиционные ещё и не мешает: обе семьи представлены и
-        // среди "хороших" архетипов (Аналитик/Дипломат/Стратег), и Уступчивый с
-        // Агрессором целиком состоят из позиционных техник.
         private static readonly Dictionary<string, string> ArchetypeForTechnique = new Dictionary<string, string>
         {
             { "objective_criteria", "Аналитик" }, { "open_question", "Аналитик" },
@@ -589,9 +518,6 @@ namespace Arena.UI
             { "Уступчивый", "Вы чаще уступаете без встречного условия, чем отстаиваете свою позицию." },
         };
 
-        // Если отрыв лидера от второго места меньше этой доли от всех тегированных
-        // выборов — называть один архетип было бы натяжкой, честнее показать
-        // "смешанный стиль".
         private const float MixedArchetypeMarginShare = 0.15f;
 
         private static (string archetype, int total) DetermineArchetype(IReadOnlyDictionary<string, int> techniqueCounts)
@@ -628,9 +554,6 @@ namespace Arena.UI
             return (best, total);
         }
 
-        // Архетип за один прогон — считается по engine.Transcript, показывается
-        // сразу после сводки исхода, до разбора по баллам: это самый "шарибельный"
-        // заголовочный результат экрана, поэтому стоит первым, а не в конце.
         private void AddArchetypeSection(Dictionary<string, TechniqueInfo> byId)
         {
             var techniqueCounts = new Dictionary<string, int>();
@@ -679,11 +602,6 @@ namespace Arena.UI
                 AddQuoteCard(exampleStep, byId, isStrength: exampleStep.ChosenOption.points > 0);
         }
 
-        // Идея "Микро-достижения (бейджи)": маленькие разовые награды поверх уже
-        // существующих данных (Transcript/TechniqueScores/NegotiatorProfile) — не
-        // новая механика подсчёта, а другой взгляд на те же самые числа. Каждый
-        // бейдж показывается только один раз за сессию (см. NegotiatorProfile.
-        // UnlockedBadgeIds), а не при каждом повторном выполнении условия.
         private class BadgeDefinition
         {
             public string Id;
@@ -700,8 +618,6 @@ namespace Arena.UI
             new BadgeDefinition { Id = "persistent", Name = "Повтор", Description = "Прошли третий сценарий за эту сессию." },
         };
 
-        // Вызывается после profile.RecordRun(...) — RunCount должен уже включать
-        // этот прогон, иначе "Повтор" сработает на ходу позже, чем должен.
         private List<string> EvaluateNewlyEarnedBadges()
         {
             var earned = new List<string>();
@@ -753,9 +669,6 @@ namespace Arena.UI
             }
         }
 
-        // Гипотеза "Микро-достижения": иконка — Resources/Icons/badge_<id>.png,
-        // пока схематичная Pillow-заглушка (та же идея, что портреты настроения
-        // Ю7) — если файла нет, просто остаётся цветной квадрат-плейсхолдер.
         private void AddBadgeCard(Transform parent, BadgeDefinition def)
         {
             var card = Theme.CreatePanel(parent, $"Badge_{def.Id}", new Color(Theme.Amber.r, Theme.Amber.g, Theme.Amber.b, 0.12f));
@@ -797,9 +710,6 @@ namespace Arena.UI
             Theme.CreateText(textGo.transform, "Description", 13, TextAnchor.UpperLeft, Theme.Muted).text = def.Description;
         }
 
-        // Общий подсчёт для BuildStrategyNarrative (Ю6, один прогон) и
-        // BuildSessionProfileNarrative (Г8, сумма по всем прогонам сессии) —
-        // раньше эта логика была только внутри BuildStrategyNarrative.
         private (string principledName, string positionalName, float principledShare, int total) AnalyzeTechniqueFamilies(
             IReadOnlyDictionary<string, int> techniqueScores, Dictionary<string, TechniqueInfo> byId)
         {
@@ -830,9 +740,6 @@ namespace Arena.UI
             return (principledName, positionalName, principledShare, total);
         }
 
-        // Гипотеза Ю6 (docs/feature-hypotheses.md): не только теги+баллы, а один
-        // абзац о стратегии в целом — детерминированный шаблон по доле принципиальных
-        // vs позиционных техник за весь прогон (без LLM), усиливает уже сделанный Ю2.
         private string BuildStrategyNarrative(Dictionary<string, TechniqueInfo> byId)
         {
             var (principledName, positionalName, principledShare, total) = AnalyzeTechniqueFamilies(engine.TechniqueScores, byId);
@@ -848,9 +755,6 @@ namespace Arena.UI
             return $"Стратегия получилась смешанной: сильная сторона — «{principledName}», но эпизодами проявлялся позиционный паттерн «{positionalName}». Если убрать эти срывы, результат станет заметно увереннее.";
         }
 
-        // Гипотеза Г8 (docs/feature-hypotheses.md): та же классификация техник, что
-        // и в Ю6, но по сумме за все прогоны сессии, а не за один раунд — показывает,
-        // устойчив ли стиль игрока или он сильно колеблется от сценария к сценарию.
         private string BuildSessionProfileNarrative(Dictionary<string, TechniqueInfo> byId)
         {
             var (principledName, positionalName, principledShare, total) = AnalyzeTechniqueFamilies(profile.TechniqueScoresTotal, byId);
@@ -866,10 +770,6 @@ namespace Arena.UI
             return $"За сессию стратегия колеблется: то принципиальный подход («{principledName}»), то позиционный откат («{positionalName}»).";
         }
 
-        // Гипотеза Ю9 (docs/feature-hypotheses.md): цветная полоса-таймлайн техник
-        // по ходу разговора (та же классификация принципиальные/позиционные, что и
-        // в Ю6/Г8) вместо только суммарных баллов — видно, где именно в разговоре
-        // был провал или удача, а не только итоговый баланс.
         private void AddTechniqueTimelineSection()
         {
             var steps = engine.Transcript.Where(s => !string.IsNullOrEmpty(s.ChosenOption.technique)).ToList();
@@ -900,11 +800,6 @@ namespace Arena.UI
             AddPlainLine("Слева направо — по порядку ходов. Зелёное — принципиальная техника, красное — позиционный торг.", Theme.EyebrowMuted);
         }
 
-        // Гипотеза Г8 (docs/feature-hypotheses.md): накопленный профиль переговорщика
-        // за сессию — радар по трём навыкам (усреднённым по всем пройденным сценариям)
-        // + абзац о доминирующей семье техник за все прогоны. Показывается только
-        // начиная со 2-го завершённого сценария за сессию — на первом прогоне
-        // "накопленному" профилю ещё не из чего складываться.
         private void AddNegotiatorProfileSection(Dictionary<string, TechniqueInfo> byId)
         {
             if (profile.RunCount < 2) return;
@@ -953,9 +848,6 @@ namespace Arena.UI
             text.text = BuildSessionArchetypeLine() + "\n\n" + BuildSessionProfileNarrative(byId);
         }
 
-        // Тот же архетип, что и AddArchetypeSection, но по накопленной за сессию
-        // частоте техник (NegotiatorProfile.TechniqueCountsTotal) вместо одного
-        // прогона — стабильнее на нескольких сценариях подряд.
         private string BuildSessionArchetypeLine()
         {
             var (archetype, total) = DetermineArchetype(profile.TechniqueCountsTotal);
@@ -976,11 +868,6 @@ namespace Arena.UI
             rect.offsetMax = Vector2.zero;
         }
 
-        // Гипотеза Ю2 (docs/feature-hypotheses.md), методология docs/eval-rubric.md §3.2:
-        // strengths — points>0, сортировка по убыванию points, при равенстве сначала
-        // центральные для домена техники; improvements — points<=0 с непустым
-        // betterAlternative, по возрастанию points. В обоих случаях — дедупликация
-        // по тегу техники (один самый яркий пример) и лимит 3.
         private List<ChosenStep> SelectHighlights(bool wantStrengths, string domainKey, Dictionary<string, TechniqueInfo> byId)
         {
             IEnumerable<ChosenStep> filtered = wantStrengths
@@ -1041,16 +928,12 @@ namespace Arena.UI
             Theme.CreateText(endContent, "Line", 17, TextAnchor.UpperLeft, color).text = text;
         }
 
-        // Сетка вместо строки: после углубления сценариев (docs/feature-hypotheses.md,
-        // задача "углубить разговоры") за один проход может накопиться до 8-10 разных
-        // тегов техник — нерастягивающийся HorizontalLayoutGroup вылезал бы за экран,
-        // GridLayoutGroup сам переносит лишние чипы на следующую строку.
-        private void AddScoreChipsRow()
+        private void AddScoreChipsRow(Dictionary<string, TechniqueInfo> byId)
         {
             var rowGo = new GameObject("ScoreRow", typeof(RectTransform));
             rowGo.transform.SetParent(endContent, false);
             var grid = rowGo.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(175, 36);
+            grid.cellSize = new Vector2(300, 40);
             grid.spacing = new Vector2(10, 10);
             grid.childAlignment = TextAnchor.MiddleLeft;
             grid.constraint = GridLayoutGroup.Constraint.Flexible;
@@ -1062,7 +945,8 @@ namespace Arena.UI
                 var accent = positive ? Theme.Sage : Theme.Coral;
                 var chipBg = Theme.CreatePanel(rowGo.transform, "Chip", new Color(accent.r, accent.g, accent.b, 0.16f));
                 var chipText = Theme.CreateText(chipBg, "Label", 16, TextAnchor.MiddleCenter, accent);
-                chipText.text = $"{kv.Key} {(positive ? "+" : "")}{kv.Value}";
+                var displayName = byId.TryGetValue(kv.Key, out var info) ? info.ru_name : kv.Key;
+                chipText.text = $"{displayName}  {(positive ? "+" : "")}{kv.Value}";
                 Theme.StretchFull(chipText.rectTransform);
             }
         }
