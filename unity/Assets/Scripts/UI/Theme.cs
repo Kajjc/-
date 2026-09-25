@@ -129,11 +129,14 @@ namespace Arena.UI
             // кнопка в стопке без первой выглядела бы странно — отключаем обе разом.
             if (Application.platform != RuntimePlatform.WebGLPlayer)
             {
-                // Экран выбора режима — сам и есть главное меню, кнопка "туда же"
-                // на нём самом не нужна (showMenuButton=false у ModeSelectController).
-                CreateCornerButton(root, "QuitButton", 8, Coral, null, "X", QuitGame);
+                const float size = 40f;
+                const float gap = 12f;
+                const float rightEdge = -12f;
+                const float topEdge = -12f;
+
+                CreateCornerButton(root, "QuitButton", new Vector2(rightEdge, topEdge), size, Coral, null, "X", QuitGame);
                 if (showMenuButton)
-                    CreateCornerButton(root, "MenuButton", 8 + 28 + 6, Teal, TryLoadSprite("Icons/icon_home"), null, () => OnRequestMainMenu?.Invoke());
+                    CreateCornerButton(root, "MenuButton", new Vector2(rightEdge - size - gap, topEdge), size, Teal, TryLoadSprite("Icons/icon_home"), null, () => OnRequestMainMenu?.Invoke());
             }
 
             return root;
@@ -152,39 +155,42 @@ namespace Arena.UI
         // кириллицы (см. TmpFontBuilder.cs, урок К1), символа умножения в нём
         // может не быть — поэтому для кнопки меню вместо буквы используется
         // отдельная иконка-домик (Resources/Icons/icon_home.png).
-        private static void CreateCornerButton(RectTransform canvasRoot, string name, float yOffsetFromTop, Color accent, Sprite icon, string textLabel, UnityEngine.Events.UnityAction onClick)
+        private static void CreateCornerButton(RectTransform canvasRoot, string name, Vector2 anchoredPos, float size, Color accent, Sprite icon, string textLabel, UnityEngine.Events.UnityAction onClick)
         {
-            var buttonRect = CreatePanel(canvasRoot, name, new Color(accent.r, accent.g, accent.b, 0.85f));
+            var buttonRect = CreatePanel(canvasRoot, name, new Color(0f, 0f, 0f, 0f)); // прозрачный фон
             buttonRect.anchorMin = new Vector2(1f, 1f);
             buttonRect.anchorMax = new Vector2(1f, 1f);
             buttonRect.pivot = new Vector2(1f, 1f);
-            buttonRect.sizeDelta = new Vector2(28, 28);
-            buttonRect.anchoredPosition = new Vector2(-8, -yOffsetFromTop);
+            buttonRect.sizeDelta = new Vector2(size, size);
+            buttonRect.anchoredPosition = anchoredPos;
 
             var button = buttonRect.gameObject.AddComponent<Button>();
             button.targetGraphic = buttonRect.GetComponent<Image>();
             var colors = button.colors;
-            colors.highlightedColor = new Color(1f, 1f, 1f, 0.92f);
-            colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 1f, 1f, 0.7f);
+            colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 0.85f);
             button.colors = colors;
             button.onClick.AddListener(onClick);
 
             if (icon != null)
             {
+                // Иконка-картинка (домик для «На главную»)
                 var iconGo = new GameObject("Icon", typeof(RectTransform));
                 iconGo.transform.SetParent(buttonRect, false);
                 var iconRect = (RectTransform)iconGo.transform;
-                iconRect.anchorMin = new Vector2(0.15f, 0.15f);
-                iconRect.anchorMax = new Vector2(0.85f, 0.85f);
+                iconRect.anchorMin = new Vector2(0.08f, 0.08f);
+                iconRect.anchorMax = new Vector2(0.92f, 0.92f);
                 iconRect.offsetMin = Vector2.zero;
                 iconRect.offsetMax = Vector2.zero;
                 var iconImage = iconGo.AddComponent<Image>();
                 iconImage.sprite = icon;
-                iconImage.color = Color.white;
+                iconImage.color = accent; // тонируем в акцентный цвет
             }
             else if (!string.IsNullOrEmpty(textLabel))
             {
-                var label = CreateText(buttonRect, "Label", 16, TextAnchor.MiddleCenter, Parchment);
+                // Текстовая метка (X для «Закрыть») — крупнее и в акцентном цвете
+                var label = CreateText(buttonRect, "Label", 34, TextAnchor.MiddleCenter, accent);
                 StretchFull(label.rectTransform);
                 label.text = textLabel;
             }
@@ -310,7 +316,7 @@ namespace Arena.UI
         public static void CreateOptionCard(Transform parent, float anchorMinX, float anchorMaxX, float anchorMinY, float anchorMaxY,
             string title, string subtitle, Color accent, UnityEngine.Events.UnityAction onClick)
         {
-            var card = CreatePanel(parent, $"Option_{title}", new Color(Parchment.r, Parchment.g, Parchment.b, 0.05f));
+            var card = CreatePanel(parent, $"Option_{title}", new Color(Navy.r, Navy.g, Navy.b, 0.5f));
             card.anchorMin = new Vector2(anchorMinX, anchorMinY);
             card.anchorMax = new Vector2(anchorMaxX, anchorMaxY);
             card.offsetMin = Vector2.zero;
@@ -322,19 +328,19 @@ namespace Arena.UI
             accentBar.offsetMin = Vector2.zero;
             accentBar.offsetMax = Vector2.zero;
 
-            var titleText = CreateText(card, "Title", 24, TextAnchor.UpperLeft, Parchment);
+            var titleText = CreateText(card, "Title", 32, TextAnchor.UpperLeft, Parchment);
             titleText.text = title;
             var titleRect = titleText.rectTransform;
-            titleRect.anchorMin = new Vector2(0.08f, 0.7f);
-            titleRect.anchorMax = new Vector2(0.92f, 0.9f);
+            titleRect.anchorMin = new Vector2(0.08f, 0.72f);
+            titleRect.anchorMax = new Vector2(0.92f, 0.90f);
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            var subtitleText = CreateText(card, "Subtitle", 19, TextAnchor.UpperLeft, Muted);
+            var subtitleText = CreateText(card, "Subtitle", 24, TextAnchor.UpperLeft, Muted);
             subtitleText.text = subtitle;
             var subtitleRect = subtitleText.rectTransform;
-            subtitleRect.anchorMin = new Vector2(0.08f, 0.1f);
-            subtitleRect.anchorMax = new Vector2(0.92f, 0.62f);
+            subtitleRect.anchorMin = new Vector2(0.08f, 0.05f);
+            subtitleRect.anchorMax = new Vector2(0.92f, 0.52f);
             subtitleRect.offsetMin = Vector2.zero;
             subtitleRect.offsetMax = Vector2.zero;
 
