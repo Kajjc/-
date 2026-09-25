@@ -140,8 +140,8 @@ namespace Arena.UI
                 Theme.Amber, Theme.Navy,
                 () => { Hide(); onStart?.Invoke(recommended, skills); });
             var startRect = (RectTransform)startBtn.transform;
-            startRect.anchorMin = new Vector2(0.30f, 0.06f);
-            startRect.anchorMax = new Vector2(0.70f, 0.15f);
+            startRect.anchorMin = new Vector2(0.52f, 0.06f);
+            startRect.anchorMax = new Vector2(0.88f, 0.15f);
             startRect.offsetMin = Vector2.zero;
             startRect.offsetMax = Vector2.zero;
 
@@ -150,8 +150,8 @@ namespace Arena.UI
                 Theme.Muted,
                 () => { Hide(); onConfigure?.Invoke(skills); });
             var configRect = (RectTransform)configBtn.transform;
-            configRect.anchorMin = new Vector2(0.30f, 0.01f);
-            configRect.anchorMax = new Vector2(0.70f, 0.055f);
+            configRect.anchorMin = new Vector2(0.12f, 0.06f);
+            configRect.anchorMax = new Vector2(0.48f, 0.15f);
             configRect.offsetMin = Vector2.zero;
             configRect.offsetMax = Vector2.zero;
         }
