@@ -242,7 +242,7 @@ namespace Arena.UI
 
             var layoutElement = go.AddComponent<LayoutElement>();
             layoutElement.minHeight = 48;
-            layoutElement.minWidth = 135;
+            layoutElement.minWidth = 200;
 
             text = CreateText(go.transform, "Label", 20, TextAnchor.MiddleCenter, Parchment);
             var textRect = text.rectTransform;
