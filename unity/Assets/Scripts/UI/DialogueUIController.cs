@@ -9,13 +9,10 @@ using UnityEngine.UI;
 
 namespace Arena.UI
 {
-    // Строит весь UI диалога кодом (без сцены/префабов) — минимизирует ручную
-    // настройку в редакторе и риск сломанных ссылок при демо.
     public class DialogueUIController : MonoBehaviour
     {
         private DialogueEngine engine;
         private Action onRequestNewScenario;
-
         private readonly NegotiatorProfile profile = new NegotiatorProfile();
 
         public Action<IEnumerable<string>> OnOpenTheory;
@@ -64,6 +61,9 @@ namespace Arena.UI
             if (root != null) return;
 
             root = Theme.CreateCanvas(transform, "DialogueCanvas");
+
+            var fullBackdrop = Theme.CreatePanel(root, "FullBackdrop", new Color(Theme.Navy.r, Theme.Navy.g, Theme.Navy.b, 0.55f));
+            Theme.StretchFull(fullBackdrop);
 
             portrait = Theme.CreatePanel(root, "Portrait", Theme.Slate);
             portraitImage = portrait.GetComponent<Image>();
@@ -129,7 +129,8 @@ namespace Arena.UI
             optionsContainer.offsetMax = Vector2.zero;
             optionsGroup = optionsGo.AddComponent<CanvasGroup>();
             var layout = optionsGo.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 10;
+            layout.padding = new RectOffset(24, 24, 16, 16);
+            layout.spacing = 14;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
             layout.childControlHeight = true;
@@ -236,8 +237,8 @@ namespace Arena.UI
         private void CreateOptionButton(int number, DialogueOption option, bool available, UnityEngine.Events.UnityAction onClick)
         {
             var fill = available
-                ? new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.06f)
-                : new Color(Theme.Coral.r, Theme.Coral.g, Theme.Coral.b, 0.08f);
+                ? new Color(1f, 1f, 1f, 0.12f)
+                : new Color(Theme.Coral.r, Theme.Coral.g, Theme.Coral.b, 0.22f);
 
             var go = new GameObject($"Option_{number}", typeof(RectTransform));
             go.transform.SetParent(optionsContainer, false);
@@ -247,10 +248,10 @@ namespace Arena.UI
             button.targetGraphic = image;
             button.interactable = available;
             if (onClick != null) button.onClick.AddListener(onClick);
-            go.AddComponent<LayoutElement>().minHeight = 58;
+            go.AddComponent<LayoutElement>().minHeight = 64;
 
             var rowLayout = go.AddComponent<HorizontalLayoutGroup>();
-            rowLayout.padding = new RectOffset(18, 18, 6, 6);
+            rowLayout.padding = new RectOffset(8, 8, 14, 14);
             rowLayout.spacing = 10;
             rowLayout.childAlignment = TextAnchor.MiddleLeft;
             rowLayout.childForceExpandWidth = false;
@@ -266,6 +267,7 @@ namespace Arena.UI
             if (!available)
                 foreach (var req in engine.GetMissingRequirements(option))
                     AddSkillRequirementBadge(go.transform, req);
+
         }
 
         private void AddSkillRequirementBadge(Transform parent, SkillRequirement requirement)
@@ -278,7 +280,7 @@ namespace Arena.UI
             badgeLayout.childForceExpandWidth = false;
             badgeLayout.childForceExpandHeight = false;
             badgeLayout.childControlWidth = true;
-            badgeLayout.childControlHeight = true;
+            badgeLayout.childControlHeight = false;
             badgeGo.AddComponent<LayoutElement>().minWidth = 62;
 
             var accent = Theme.ForSkill(requirement.skill);
@@ -286,16 +288,16 @@ namespace Arena.UI
             var iconGo = new GameObject("Icon", typeof(RectTransform));
             iconGo.transform.SetParent(badgeGo.transform, false);
             var iconLayout = iconGo.AddComponent<LayoutElement>();
-            iconLayout.minWidth = 16;
-            iconLayout.minHeight = 16;
+            iconLayout.preferredWidth = 16;
+            iconLayout.preferredHeight = 16;
             iconLayout.flexibleHeight = 0;
             var iconImage = iconGo.AddComponent<Image>();
-            iconImage.preserveAspect = true;
             var sprite = Theme.TryLoadSprite($"Icons/skill_{requirement.skill}");
             if (sprite != null)
             {
                 iconImage.sprite = sprite;
                 iconImage.color = Color.white;
+                iconImage.preserveAspect = true;
             }
             else
             {
@@ -309,7 +311,7 @@ namespace Arena.UI
         private void UpdateBackground()
         {
             var domainKey = DomainKeyForSphere(engine.Scenario.meta.sphere) ?? engine.Scenario.meta.id;
-            Theme.SetCanvasBackground(root, $"Backgrounds/{domainKey}");
+            Theme.SetCanvasBackground(root, $"Background/{domainKey}");
         }
 
         private void UpdatePortraitSprite(string moodSuffix)
@@ -499,15 +501,11 @@ namespace Arena.UI
         {
             { "objective_criteria", "Аналитик" }, { "open_question", "Аналитик" },
             { "batna_leverage", "Аналитик" }, { "recover", "Аналитик" },
-
             { "state_interest", "Дипломат" }, { "active_listening", "Дипломат" },
             { "de_escalate", "Дипломат" },
-
             { "package_deal", "Стратег" }, { "anchor_with_flex", "Стратег" },
-
             { "escalate", "Агрессор" }, { "personal_attack", "Агрессор" },
             { "empty_threat", "Агрессор" }, { "position_push", "Агрессор" },
-
             { "give_up", "Уступчивый" }, { "vague_claim", "Уступчивый" },
         };
 
@@ -687,6 +685,7 @@ namespace Arena.UI
             iconGo.transform.SetParent(card, false);
             iconGo.AddComponent<LayoutElement>().minWidth = 40;
             var iconImage = iconGo.AddComponent<Image>();
+            iconImage.preserveAspect = true;
             var sprite = Theme.TryLoadSprite($"Icons/badge_{def.Id}");
             if (sprite != null)
             {
@@ -911,7 +910,7 @@ namespace Arena.UI
         {
             switch (sphere)
             {
-                case "HR": return "hr";
+                case "HR": return "Hr";
                 case "B2B-продажи": return "sales";
                 case "Закупки": return "procurement";
                 default: return null;
