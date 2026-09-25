@@ -119,16 +119,16 @@ namespace Arena.UI
             layout.childControlWidth = true;
             layout.childControlHeight = true;
 
-            // Кнопка «Пропустить тест» — внизу по центру, неброская.
+            // Кнопка «Пропустить тест» — снизу справа, в стиле CTA.
             var skipBtn = Theme.CreateButton(
                 panel,
                 "Пропустить тест →",
-                new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.06f),
                 Theme.Amber,
+                Theme.Navy,
                 () => { Hide(); onSkip?.Invoke(); });
             var skipRect = (RectTransform)skipBtn.transform;
-            skipRect.anchorMin = new Vector2(0.34f, 0.06f);
-            skipRect.anchorMax = new Vector2(0.66f, 0.13f);
+            skipRect.anchorMin = new Vector2(0.72f, 0.06f);
+            skipRect.anchorMax = new Vector2(0.94f, 0.13f);
             skipRect.offsetMin = Vector2.zero;
             skipRect.offsetMax = Vector2.zero;
         }
