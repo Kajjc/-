@@ -37,7 +37,7 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "TheoryCanvas");
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleLeft, Theme.Teal);
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 28, TextAnchor.MiddleLeft, Theme.Teal);
             eyebrow.text = "ТЕОРИЯ И ТЕХНИКИ";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.06f, 0.9f);
@@ -56,8 +56,8 @@ namespace Arena.UI
                 });
             backButton.GetComponentInChildren<TMP_Text>().alignment = TextAlignmentOptions.Center;
             var backRect = (RectTransform)backButton.transform;
-            backRect.anchorMin = new Vector2(0.78f, 0.9f);
-            backRect.anchorMax = new Vector2(0.94f, 0.97f);
+            backRect.anchorMin = new Vector2(0.72f, 0.9f);
+            backRect.anchorMax = new Vector2(0.86f, 0.97f);
             backRect.offsetMin = Vector2.zero;
             backRect.offsetMax = Vector2.zero;
 

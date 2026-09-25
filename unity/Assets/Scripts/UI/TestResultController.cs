@@ -59,7 +59,7 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "TestResultCanvas");
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleCenter, Theme.Amber);
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 28, TextAnchor.MiddleCenter, Theme.Amber);
             eyebrow.text = "РЕЗУЛЬТАТ ТЕСТА";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.1f, 0.86f);

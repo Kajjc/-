@@ -65,7 +65,7 @@ namespace Arena.UI
             header.offsetMin = Vector2.zero;
             header.offsetMax = Vector2.zero;
 
-            var eyebrow = Theme.CreateText(header, "Eyebrow", 24, TextAnchor.MiddleLeft, Theme.Amber);
+            var eyebrow = Theme.CreateText(header, "Eyebrow", 28, TextAnchor.MiddleLeft, Theme.Amber);
             eyebrow.text = "ТЕСТ НАВЫКОВ";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0f, 0f);
