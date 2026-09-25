@@ -1,0 +1,5 @@
+# Только для вспомогательных скриптов подготовки ассетов (prepare_portrait.py,
+# prepare_icon.py, prepare_logo.py, slice_voice.py). Игре и validate_scenario.py
+# внешние пакеты не нужны. Установка: python -m pip install -r scripts/requirements.txt
+numpy==2.5.2
+Pillow==12.3.0
