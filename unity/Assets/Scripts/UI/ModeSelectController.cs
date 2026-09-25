@@ -37,17 +37,13 @@ namespace Arena.UI
             root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: false);
             Theme.SetCanvasBackground(root, "Background/title");
 
-            // Логотип вместо текстового eyebrow — картинка из Resources/Icons/arena_logo.
-            var logoGo = new GameObject("Logo", typeof(RectTransform));
-            logoGo.transform.SetParent(root, false);
-            var logoRect = (RectTransform)logoGo.transform;
-            logoRect.anchorMin = new Vector2(0.38f, 0.55f);
-            logoRect.anchorMax = new Vector2(0.62f, 0.95f);
-            logoRect.offsetMin = Vector2.zero;
-            logoRect.offsetMax = Vector2.zero;
-            var logoImage = logoGo.AddComponent<UnityEngine.UI.Image>();
-            logoImage.sprite = Theme.TryLoadSprite("Icons/arena_logo");
-            logoImage.preserveAspect = true;
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 24, TextAnchor.MiddleCenter, Theme.Amber);
+            eyebrow.text = "АРЕНА ПЕРЕГОВОРОВ";
+            var eyebrowRect = eyebrow.rectTransform;
+            eyebrowRect.anchorMin = new Vector2(0.1f, 0.60f);
+            eyebrowRect.anchorMax = new Vector2(0.9f, 0.68f);
+            eyebrowRect.offsetMin = Vector2.zero;
+            eyebrowRect.offsetMax = Vector2.zero;
 
             var title = Theme.CreateText(root, "Title", 40, TextAnchor.MiddleCenter, Theme.Parchment);
             title.text = "С чего начнём?";
