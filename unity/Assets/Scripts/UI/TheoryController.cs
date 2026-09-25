@@ -56,7 +56,7 @@ namespace Arena.UI
                 });
             backButton.GetComponentInChildren<TMP_Text>().alignment = TextAlignmentOptions.Center;
             var backRect = (RectTransform)backButton.transform;
-            backRect.anchorMin = new Vector2(0.72f, 0.9f);
+            backRect.anchorMin = new Vector2(0.70f, 0.9f);
             backRect.anchorMax = new Vector2(0.86f, 0.97f);
             backRect.offsetMin = Vector2.zero;
             backRect.offsetMax = Vector2.zero;

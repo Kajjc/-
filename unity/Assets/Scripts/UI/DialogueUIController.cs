@@ -103,7 +103,7 @@ namespace Arena.UI
             pipsGo.transform.SetParent(root, false);
             pipsRow = (RectTransform)pipsGo.transform;
             pipsRow.anchorMin = new Vector2(0.6f, 0.86f);
-            pipsRow.anchorMax = new Vector2(0.95f, 0.95f);
+            pipsRow.anchorMax = new Vector2(0.88f, 0.95f);
             pipsRow.offsetMin = Vector2.zero;
             pipsRow.offsetMax = Vector2.zero;
             var pipsLayout = pipsGo.AddComponent<HorizontalLayoutGroup>();
