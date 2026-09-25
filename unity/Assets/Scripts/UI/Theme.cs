@@ -22,16 +22,9 @@ namespace Arena.UI
         public static readonly Color Parchment = Hex("#F3EFE7");
         public static readonly Color Ink = Hex("#23262B");
 
-        // Слегка осветлённый Slate — используется вместо чистого Navy/Slate там,
-        // где нужен видимый на тёмном фоне холодный акцент (пипсы навыка "Логика").
         public static readonly Color LogikaAccent = Color.Lerp(Slate, Color.white, 0.3f);
 
-        // Вторичный текст (подписи, описания) — достаточно непрозрачный, чтобы
-        // реально читаться на тёмном фоне, но темнее основного белого текста.
         public static readonly Color Muted = new Color(Parchment.r, Parchment.g, Parchment.b, 0.94f);
-        // Мелкие служебные CAPS-подписи (короткие заголовки полей типа "СФЕРА") —
-        // минимально приглушены. Не использовать для длинного текста (абзацев,
-        // цитат) — на таком объёме текста заметно теряет контраст.
         public static readonly Color EyebrowMuted = new Color(Parchment.r, Parchment.g, Parchment.b, 0.8f);
 
         private static TMP_FontAsset cachedFont;
@@ -58,17 +51,20 @@ namespace Arena.UI
             }
         }
 
+        // Делает первую букву заглавной — для отображения роли оппонента
+        // (в JSON хранится строчными, а в UI нужно с большой).
+        public static string Capitalize(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s;
+            return char.ToUpper(s[0]) + s.Substring(1);
+        }
+
         private static Color Hex(string hex)
         {
             ColorUtility.TryParseHtmlString(hex, out var c);
             return c;
         }
 
-        // К1 (docs/feature-hypotheses.md): встроенный LegacyRuntime.ttf не содержит
-        // кириллических глифов на WebGL (подтверждено 18.09 — весь русский текст
-        // пропадал в билде). UIFont SDF.asset — статический TMP-атлас, собранный
-        // Assets/Editor/TmpFontBuilder.cs из системного Segoe UI, покрывает Basic
-        // Latin + Cyrillic + пунктуацию, реально встречающуюся в контенте игры.
         public static TMP_FontAsset FontAsset()
         {
             if (cachedFont == null)
@@ -96,12 +92,6 @@ namespace Arena.UI
             go.AddComponent<StandaloneInputModule>();
         }
 
-        // GameFlow регистрирует сюда переход в главное меню один раз в Begin() —
-        // кнопка "домой" нужна сразу на всех экранах, а не как обычный переход
-        // между конкретной парой экранов (те уже получают свой callback явным
-        // параметром при Show(...) — см. DialogueUIController.StartScenario и
-        // т.п.). Тащить этот же параметр ещё и через Show(...) всех пяти
-        // контроллеров ради одной общей кнопки было бы лишним дублированием.
         public static System.Action OnRequestMainMenu;
 
         public static RectTransform CreateCanvas(Transform parent, string name, bool showMenuButton = true)
@@ -122,11 +112,6 @@ namespace Arena.UI
             var background = CreatePanel(root, "Background", Navy);
             StretchFull(background);
 
-            // В WebGL Application.Quit ничего не делает — браузер не даёт странице
-            // закрыть саму себя — поэтому кнопка выхода там не создаётся вообще, а
-            // не показывается нерабочей. Кнопка меню технически безвредна и там
-            // (просто переключает экраны), но раз выхода всё равно нет, вторая
-            // кнопка в стопке без первой выглядела бы странно — отключаем обе разом.
             if (Application.platform != RuntimePlatform.WebGLPlayer)
             {
                 const float size = 40f;
@@ -142,22 +127,9 @@ namespace Arena.UI
             return root;
         }
 
-        // Общий билдер маленькой квадратной кнопки в правом верхнем углу — общий
-        // для выхода и возврата в меню, чтобы не дублировать вёрстку дважды.
-        // yOffsetFromTop растёт по мере добавления новых кнопок в стопку вниз.
-        //
-        // Компактный размер (28x28) и минимальный отступ — почти на всех экранах
-        // у самого верхнего правого края уже что-то есть (пипсы навыков в диалоге
-        // до x=0.95, счётчик вопроса в тесте навыков и "← Назад" в теории до
-        // x=0.94/y=0.97) — проверено, что эта колонка кнопок (правее x≈0.97) их
-        // не перекрывает. Текстовая подпись — только ASCII (кнопка выхода — "X",
-        // не "×"): кастомный TMP-шрифт проекта собран лишь из Basic Latin +
-        // кириллицы (см. TmpFontBuilder.cs, урок К1), символа умножения в нём
-        // может не быть — поэтому для кнопки меню вместо буквы используется
-        // отдельная иконка-домик (Resources/Icons/icon_home.png).
         private static void CreateCornerButton(RectTransform canvasRoot, string name, Vector2 anchoredPos, float size, Color accent, Sprite icon, string textLabel, UnityEngine.Events.UnityAction onClick)
         {
-            var buttonRect = CreatePanel(canvasRoot, name, new Color(0f, 0f, 0f, 0f)); // прозрачный фон
+            var buttonRect = CreatePanel(canvasRoot, name, new Color(0f, 0f, 0f, 0f));
             buttonRect.anchorMin = new Vector2(1f, 1f);
             buttonRect.anchorMax = new Vector2(1f, 1f);
             buttonRect.pivot = new Vector2(1f, 1f);
@@ -175,7 +147,6 @@ namespace Arena.UI
 
             if (icon != null)
             {
-                // Иконка-картинка (домик для «На главную»)
                 var iconGo = new GameObject("Icon", typeof(RectTransform));
                 iconGo.transform.SetParent(buttonRect, false);
                 var iconRect = (RectTransform)iconGo.transform;
@@ -185,11 +156,10 @@ namespace Arena.UI
                 iconRect.offsetMax = Vector2.zero;
                 var iconImage = iconGo.AddComponent<Image>();
                 iconImage.sprite = icon;
-                iconImage.color = accent; // тонируем в акцентный цвет
+                iconImage.color = accent;
             }
             else if (!string.IsNullOrEmpty(textLabel))
             {
-                // Текстовая метка (X для «Закрыть») — крупнее и в акцентном цвете
                 var label = CreateText(buttonRect, "Label", 34, TextAnchor.MiddleCenter, accent);
                 StretchFull(label.rectTransform);
                 label.text = textLabel;
@@ -236,7 +206,6 @@ namespace Arena.UI
             return text;
         }
 
-        // Обычная кнопка (реплика диалога, CTA) — прямоугольная плашка с текстом слева.
         public static Button CreateButton(Transform parent, string label, Color fill, Color textColor, UnityEngine.Events.UnityAction onClick)
         {
             var go = new GameObject($"Button_{label}", typeof(RectTransform));
@@ -263,8 +232,6 @@ namespace Arena.UI
             return button;
         }
 
-        // Чип-переключатель (сфера/тон/уровень сложности в админ-конфиге) — пилюля,
-        // которая явно показывает состояние "выбрано"/"не выбрано".
         public static Button CreateChip(Transform parent, string label, UnityEngine.Events.UnityAction onClick, out Image background, out TMP_Text text)
         {
             var go = new GameObject($"Chip_{label}", typeof(RectTransform));
@@ -286,13 +253,8 @@ namespace Arena.UI
             return button;
         }
 
-        // Пытается загрузить сгенерированный ассет по конвенции имён из docs/team-plan.md
-        // (Resources/Portraits|Backgrounds|Icons/<имя>.png) — null, если файла ещё нет.
         public static Sprite TryLoadSprite(string resourcePath) => Resources.Load<Sprite>(resourcePath);
 
-        // Ищет дочернюю панель "Background" (её создаёт CreateCanvas) и либо ставит
-        // на неё реальный фон, либо возвращает к сплошному Navy, если ассета нет —
-        // безопасно вызывать повторно (например, при смене сценария).
         public static void SetCanvasBackground(RectTransform canvasRoot, string resourcePath)
         {
             var backgroundTransform = canvasRoot.Find("Background");
@@ -311,8 +273,6 @@ namespace Arena.UI
             }
         }
 
-        // Карточка-опция с акцентной полосой сверху, заголовком и подписью —
-        // вид карточек на экране выбора режима (ModeSelectController).
         public static void CreateOptionCard(Transform parent, float anchorMinX, float anchorMaxX, float anchorMinY, float anchorMaxY,
             string title, string subtitle, Color accent, UnityEngine.Events.UnityAction onClick)
         {
@@ -356,10 +316,6 @@ namespace Arena.UI
         private const float ScrollbarWidth = 10f;
         private const float ScrollbarGap = 6f;
 
-        // Вертикальный прокручиваемый список (экран "Теория и техники", экран итога):
-        // возвращает корневой RectTransform (для позиционирования на экране) и через
-        // out — Content, куда добавлять элементы списка сверху вниз. Скроллбар справа
-        // виден постоянно — чтобы было очевидно, что ниже есть ещё содержимое.
         public static RectTransform CreateScrollList(Transform parent, string name, out RectTransform content)
         {
             var scrollGo = new GameObject(name, typeof(RectTransform));
@@ -391,9 +347,6 @@ namespace Arena.UI
             content.anchorMax = new Vector2(1f, 1f);
             content.pivot = new Vector2(0.5f, 1f);
             content.anchoredPosition = Vector2.zero;
-            // Без явного sizeDelta=0 RectTransform наследует дефолтные 100x100 от
-            // создания — при растянутых по X анкорах это делает Content на 100px
-            // шире вьюпорта и обрезает текст по обеим сторонам под RectMask2D.
             content.sizeDelta = Vector2.zero;
 
             var contentLayout = contentGo.AddComponent<VerticalLayoutGroup>();

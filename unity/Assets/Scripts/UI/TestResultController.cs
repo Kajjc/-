@@ -128,7 +128,7 @@ namespace Arena.UI
             recTitleRect.offsetMax = Vector2.zero;
 
             var recRole = Theme.CreateText(card, "RecRole", 17, TextAnchor.MiddleLeft, Theme.Muted);
-            recRole.text = $"Оппонент: {recommended.meta.opponentRole}";
+            recRole.text = $"Оппонент: {Theme.Capitalize(recommended.meta.opponentRole)}";
             var recRoleRect = recRole.rectTransform;
             recRoleRect.anchorMin = new Vector2(0.05f, 0.08f);
             recRoleRect.anchorMax = new Vector2(0.95f, 0.38f);

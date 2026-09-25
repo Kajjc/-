@@ -250,20 +250,10 @@ namespace Arena.UI
             }
 
             endPanel.gameObject.SetActive(false);
-            opponentRoleText.text = engine.Scenario.meta.opponentRole;
+            opponentRoleText.text = Theme.Capitalize(engine.Scenario.meta.opponentRole);
             opponentText.text = engine.CurrentNode.opponentLine;
             RenderPips();
             RenderMood();
-
-            // Гипотеза Ю1 (docs/feature-hypotheses.md): одна короткая строка перед
-            // первым выбором, чтобы серые/заблокированные реплики не читались как
-            // баг — исчезает сама после первого хода, лишнего экрана не создаёт.
-            if (engine.Transcript.Count == 0)
-            {
-                var hint = Theme.CreateText(optionsContainer, "Hint", 16, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
-                hint.text = "Серые реплики пока недоступны — рядом с ними указано, какого навыка не хватает.";
-                hint.gameObject.AddComponent<LayoutElement>().minHeight = 26;
-            }
 
             foreach (var option in engine.CurrentNode.options)
             {

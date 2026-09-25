@@ -438,7 +438,7 @@ namespace Arena.UI
             if (previewScenario == null) return;
 
             scenarioPreviewText.text = $"{previewScenario.meta.sphere} — {previewScenario.meta.topic}";
-            rolePreviewText.text = previewScenario.meta.opponentRole;
+            rolePreviewText.text = Theme.Capitalize(previewScenario.meta.opponentRole);
         }
 
         private void OnStartClicked()
