@@ -276,7 +276,7 @@ namespace Arena.UI
             badgeLayout.spacing = 4;
             badgeLayout.childAlignment = TextAnchor.MiddleLeft;
             badgeLayout.childForceExpandWidth = false;
-            badgeLayout.childForceExpandHeight = true;
+            badgeLayout.childForceExpandHeight = false;
             badgeLayout.childControlWidth = true;
             badgeLayout.childControlHeight = true;
             badgeGo.AddComponent<LayoutElement>().minWidth = 62;
@@ -288,7 +288,9 @@ namespace Arena.UI
             var iconLayout = iconGo.AddComponent<LayoutElement>();
             iconLayout.minWidth = 16;
             iconLayout.minHeight = 16;
+            iconLayout.flexibleHeight = 0;
             var iconImage = iconGo.AddComponent<Image>();
+            iconImage.preserveAspect = true;
             var sprite = Theme.TryLoadSprite($"Icons/skill_{requirement.skill}");
             if (sprite != null)
             {
@@ -656,7 +658,7 @@ namespace Arena.UI
             var rowGo = new GameObject("BadgesRow", typeof(RectTransform));
             rowGo.transform.SetParent(endContent, false);
             var grid = rowGo.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(240, 90);
+            grid.cellSize = new Vector2(280, 100);
             grid.spacing = new Vector2(12, 12);
             grid.childAlignment = TextAnchor.MiddleLeft;
             grid.constraint = GridLayoutGroup.Constraint.Flexible;
@@ -707,7 +709,7 @@ namespace Arena.UI
             textLayout.childAlignment = TextAnchor.MiddleLeft;
 
             Theme.CreateText(textGo.transform, "Name", 16, TextAnchor.UpperLeft, Theme.Amber).text = def.Name;
-            Theme.CreateText(textGo.transform, "Description", 13, TextAnchor.UpperLeft, Theme.Muted).text = def.Description;
+            Theme.CreateText(textGo.transform, "Description", 12, TextAnchor.UpperLeft, Theme.Muted).text = def.Description;
         }
 
         private (string principledName, string positionalName, float principledShare, int total) AnalyzeTechniqueFamilies(
