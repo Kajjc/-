@@ -114,7 +114,7 @@ python scripts/validate_scenario.py unity/Assets/Resources/Scenarios/*.json
 ## Документация
 
 - [**Презентация**](docs/presentation/arena-peregovorov.pdf) ([pptx](docs/presentation/arena-peregovorov.pptx)) — продукт, механики, демо, техника, планы.
-- [**Сопроводительная документация**](docs/documentation.md) — аудитория и проблема, границы MVP, архитектура, логика симуляции, запуск и демонстрация, использованные библиотеки и ассеты.
+- [**Сопроводительная документация**](docs/documentation.md) ([Word](docs/arena-peregovorov-documentation.docx)) — аудитория и проблема, границы MVP, архитектура, логика симуляции, запуск и демонстрация, использованные библиотеки и ассеты; в приложениях — все рабочие документы команды.
 - [Методология оценки и таксономия техник](docs/eval-rubric.md)
 - [Тест навыков](docs/skill-test.md)
 - [Обоснование выбора трёх сфер](docs/negotiation-domains.md)

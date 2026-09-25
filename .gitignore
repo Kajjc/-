@@ -66,3 +66,6 @@ unity/[Aa]ssets/StreamingAssets/aa/*
 .DS_Store
 Thumbs.db
 *.swp
+
+# Промежуточные файлы сборки Word-версии документации (scripts/docx_html.py)
+/build/
