@@ -78,7 +78,7 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "AdminConfigCanvas");
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleLeft, Theme.Teal);
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 28, TextAnchor.MiddleLeft, Theme.Teal);
             eyebrow.text = showSkillEditor ? "АДМИНИСТРАТОР — НАСТРОЙКА КЕЙСА" : "НАСТРОЙКА СЦЕНАРИЯ";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.06f, 0.9f);
@@ -438,7 +438,7 @@ namespace Arena.UI
             if (previewScenario == null) return;
 
             scenarioPreviewText.text = $"{previewScenario.meta.sphere} — {previewScenario.meta.topic}";
-            rolePreviewText.text = previewScenario.meta.opponentRole;
+            rolePreviewText.text = Theme.Capitalize(previewScenario.meta.opponentRole);
         }
 
         private void OnStartClicked()

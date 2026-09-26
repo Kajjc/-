@@ -59,7 +59,7 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "TestResultCanvas");
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleCenter, Theme.Amber);
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 28, TextAnchor.MiddleCenter, Theme.Amber);
             eyebrow.text = "РЕЗУЛЬТАТ ТЕСТА";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.1f, 0.86f);
@@ -128,7 +128,7 @@ namespace Arena.UI
             recTitleRect.offsetMax = Vector2.zero;
 
             var recRole = Theme.CreateText(card, "RecRole", 17, TextAnchor.MiddleLeft, Theme.Muted);
-            recRole.text = $"Оппонент: {recommended.meta.opponentRole}";
+            recRole.text = $"Оппонент: {Theme.Capitalize(recommended.meta.opponentRole)}";
             var recRoleRect = recRole.rectTransform;
             recRoleRect.anchorMin = new Vector2(0.05f, 0.08f);
             recRoleRect.anchorMax = new Vector2(0.95f, 0.38f);
@@ -140,8 +140,8 @@ namespace Arena.UI
                 Theme.Amber, Theme.Navy,
                 () => { Hide(); onStart?.Invoke(recommended, skills); });
             var startRect = (RectTransform)startBtn.transform;
-            startRect.anchorMin = new Vector2(0.30f, 0.06f);
-            startRect.anchorMax = new Vector2(0.70f, 0.15f);
+            startRect.anchorMin = new Vector2(0.52f, 0.06f);
+            startRect.anchorMax = new Vector2(0.88f, 0.15f);
             startRect.offsetMin = Vector2.zero;
             startRect.offsetMax = Vector2.zero;
 
@@ -150,8 +150,8 @@ namespace Arena.UI
                 Theme.Muted,
                 () => { Hide(); onConfigure?.Invoke(skills); });
             var configRect = (RectTransform)configBtn.transform;
-            configRect.anchorMin = new Vector2(0.30f, 0.01f);
-            configRect.anchorMax = new Vector2(0.70f, 0.055f);
+            configRect.anchorMin = new Vector2(0.12f, 0.06f);
+            configRect.anchorMax = new Vector2(0.48f, 0.15f);
             configRect.offsetMin = Vector2.zero;
             configRect.offsetMax = Vector2.zero;
         }
