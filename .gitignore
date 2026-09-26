@@ -66,3 +66,6 @@ unity/[Aa]ssets/StreamingAssets/aa/*
 .DS_Store
 Thumbs.db
 *.swp
+# Unity crash recovery — never commit
+unity/Assets/_Recovery/
+unity/Assets/_Recovery.meta
