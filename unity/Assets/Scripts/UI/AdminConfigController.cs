@@ -68,7 +68,7 @@ namespace Arena.UI
             logoRect.offsetMin = Vector2.zero;
             logoRect.offsetMax = Vector2.zero;
             var logoImage = logoGo.AddComponent<UnityEngine.UI.Image>();
-            logoImage.sprite = Theme.TryLoadSprite("Icons/arena white");
+            logoImage.sprite = Theme.TryLoadSprite("Icons/arena_white");
             logoImage.preserveAspect = true;
             RebuildToneChips();
             root.gameObject.SetActive(true);
