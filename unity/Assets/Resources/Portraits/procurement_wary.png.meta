@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: f562a47bebb62cd45af0cd271e4776be
+guid: d5a71077948e08142a7f99a4e3d1abe1
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8923311985098935116
-    second: procurement_calm_0
+      213: 6913853443524857063
+    second: procurement_wary_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,7 +113,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: procurement_calm_0
+      name: procurement_wary_0
       rect:
         serializedVersion: 2
         x: 0
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4b4313cf6070a2480800000000000000
-      internalID: -8923311985098935116
+      spriteID: 7ec09626311f2ff50800000000000000
+      internalID: 6913853443524857063
       vertices: []
       indices: 
       edges: []

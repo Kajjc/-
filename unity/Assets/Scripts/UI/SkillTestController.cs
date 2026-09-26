@@ -10,8 +10,6 @@ namespace Arena.UI
     // в перемешанном порядке, 3-балльная шкала, на выходе — PlayerSkills.
     // Кнопка «Пропустить тест» ведёт сразу к настройке сценария с дефолтными
     // навыками — на случай, если пользователь передумал проходить тест.
-    // Возврат в главное меню обеспечивает глобальная кнопка «домой»
-    // (Theme.CreateCanvas → OnRequestMainMenu), отдельная кнопка не нужна.
     public class SkillTestController : MonoBehaviour
     {
         private RectTransform root;
@@ -28,9 +26,6 @@ namespace Arena.UI
 
         public GameObject Root => root != null ? root.gameObject : null;
 
-        // onSkip опционален: если не передан, кнопка всё равно рисуется, но
-        // ничего не делает. Существующие вызовы Show(onComplete) продолжают
-        // работать без изменений.
         public void Show(Action<PlayerSkills> onComplete, Action onSkip = null)
         {
             this.onComplete = onComplete;
@@ -55,6 +50,10 @@ namespace Arena.UI
             if (root != null) return;
 
             root = Theme.CreateCanvas(transform, "SkillTestCanvas");
+            Theme.SetCanvasBackground(root, "Background/title");
+
+            var backdrop = Theme.CreatePanel(root, "Backdrop", new Color(Theme.Navy.r, Theme.Navy.g, Theme.Navy.b, 0.55f));
+            Theme.StretchFull(backdrop);
 
             var panel = Theme.CreatePanel(root, "Content", new Color(0, 0, 0, 0));
             Theme.StretchFull(panel);
@@ -119,7 +118,6 @@ namespace Arena.UI
             layout.childControlWidth = true;
             layout.childControlHeight = true;
 
-            // Кнопка «Пропустить тест» — снизу справа, в стиле CTA.
             var skipBtn = Theme.CreateButton(
                 panel,
                 "Пропустить тест →",

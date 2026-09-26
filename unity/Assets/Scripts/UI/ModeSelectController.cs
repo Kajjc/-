@@ -37,23 +37,25 @@ namespace Arena.UI
             root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: false);
             Theme.SetCanvasBackground(root, "Background/title");
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 24, TextAnchor.MiddleCenter, Theme.Amber);
-            eyebrow.text = "АРЕНА ПЕРЕГОВОРОВ";
-            var eyebrowRect = eyebrow.rectTransform;
-            eyebrowRect.anchorMin = new Vector2(0.1f, 0.60f);
-            eyebrowRect.anchorMax = new Vector2(0.9f, 0.68f);
-            eyebrowRect.offsetMin = Vector2.zero;
-            eyebrowRect.offsetMax = Vector2.zero;
+            var logoGo = new GameObject("Logo", typeof(RectTransform));
+            logoGo.transform.SetParent(root, false);
+            var logoRect = (RectTransform)logoGo.transform;
+            logoRect.anchorMin = new Vector2(0.32f, 0.51f);
+            logoRect.anchorMax = new Vector2(0.68f, 0.95f);
+            logoRect.offsetMin = Vector2.zero;
+            logoRect.offsetMax = Vector2.zero;
+            var logoImage = logoGo.AddComponent<UnityEngine.UI.Image>();
+            logoImage.sprite = Theme.TryLoadSprite("Icons/arena_logo");
+            logoImage.preserveAspect = true;
 
             var title = Theme.CreateText(root, "Title", 40, TextAnchor.MiddleCenter, Theme.Parchment);
             title.text = "С чего начнём?";
             var titleRect = title.rectTransform;
-            titleRect.anchorMin = new Vector2(0.1f, 0.42f);
-            titleRect.anchorMax = new Vector2(0.9f, 0.52f);
+            titleRect.anchorMin = new Vector2(0.1f, 0.36f);
+            titleRect.anchorMax = new Vector2(0.9f, 0.58f);
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            // Три карточки: каждая ~28% ширины, промежутки по 2%.
             Theme.CreateOptionCard(root, 0.06f, 0.34f, 0.08f, 0.41f,
                 "Тренировка",
                 "Сразу к переговорам — без теста. Сценарий подберётся автоматически.",
