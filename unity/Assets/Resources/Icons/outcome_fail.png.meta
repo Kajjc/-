@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: f562a47bebb62cd45af0cd271e4776be
+guid: 325c0873134536c41a6499086780cc32
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8923311985098935116
-    second: procurement_calm_0
+      213: -2586710083866490253
+    second: outcome_fail_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: procurement_calm_0
+      name: outcome_fail_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 500
-        height: 500
+        width: 1254
+        height: 1254
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4b4313cf6070a2480800000000000000
-      internalID: -8923311985098935116
+      spriteID: 37a873a32e82a1cd0800000000000000
+      internalID: -2586710083866490253
       vertices: []
       indices: 
       edges: []

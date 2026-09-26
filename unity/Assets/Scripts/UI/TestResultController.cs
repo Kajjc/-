@@ -88,8 +88,8 @@ namespace Arena.UI
             var rowGo = new GameObject("SkillsRow", typeof(RectTransform));
             rowGo.transform.SetParent(root, false);
             var row = (RectTransform)rowGo.transform;
-            row.anchorMin = new Vector2(0.15f, 0.55f);
-            row.anchorMax = new Vector2(0.85f, 0.72f);
+            row.anchorMin = new Vector2(0.15f, 0.52f);
+            row.anchorMax = new Vector2(0.85f, 0.74f);
             row.offsetMin = Vector2.zero;
             row.offsetMax = Vector2.zero;
             var layout = rowGo.AddComponent<HorizontalLayoutGroup>();
@@ -99,15 +99,15 @@ namespace Arena.UI
             layout.childControlWidth = true;
             layout.childControlHeight = true;
 
-            AddSkillChip(row, "Напор", skills.napor, Theme.ForSkill("napor"));
-            AddSkillChip(row, "Эмпатия", skills.empatiya, Theme.ForSkill("empatiya"));
-            AddSkillChip(row, "Логика", skills.logika, Theme.ForSkill("logika"));
+            AddSkillChip(row, "Напор", "napor", skills.napor, Theme.ForSkill("napor"));
+            AddSkillChip(row, "Эмпатия", "empatiya", skills.empatiya, Theme.ForSkill("empatiya"));
+            AddSkillChip(row, "Логика", "logika", skills.logika, Theme.ForSkill("logika"));
 
             // --- Рекомендованная карточка ---
             var card = Theme.CreatePanel(root, "RecommendedCard",
                 new Color(Theme.Amber.r, Theme.Amber.g, Theme.Amber.b, 0.12f));
             card.anchorMin = new Vector2(0.1f, 0.20f);
-            card.anchorMax = new Vector2(0.9f, 0.50f);
+            card.anchorMax = new Vector2(0.9f, 0.48f);
             card.offsetMin = Vector2.zero;
             card.offsetMax = Vector2.zero;
 
@@ -156,16 +156,41 @@ namespace Arena.UI
             configRect.offsetMax = Vector2.zero;
         }
 
-        private void AddSkillChip(Transform parent, string label, int level, Color accent)
+        private void AddSkillChip(Transform parent, string label, string skillId, int level, Color accent)
         {
             var go = new GameObject($"Chip_{label}", typeof(RectTransform));
             go.transform.SetParent(parent, false);
             var bg = go.AddComponent<Image>();
             bg.color = new Color(accent.r, accent.g, accent.b, 0.18f);
 
-            var txt = Theme.CreateText(go.transform, "Label", 22, TextAnchor.MiddleCenter, accent);
+            // Иконка навыка сверху
+            var iconGo = new GameObject("Icon", typeof(RectTransform));
+            iconGo.transform.SetParent(go.transform, false);
+            var iconRect = (RectTransform)iconGo.transform;
+            iconRect.anchorMin = new Vector2(0.35f, 0.52f);
+            iconRect.anchorMax = new Vector2(0.65f, 0.94f);
+            iconRect.offsetMin = Vector2.zero;
+            iconRect.offsetMax = Vector2.zero;
+            var iconImage = iconGo.AddComponent<Image>();
+            var sprite = Theme.TryLoadSprite($"Icons/skill_{skillId}");
+            if (sprite != null)
+            {
+                iconImage.sprite = sprite;
+                iconImage.color = Color.white;
+                iconImage.preserveAspect = true;
+            }
+            else
+            {
+                iconImage.color = accent;
+            }
+
+            var txt = Theme.CreateText(go.transform, "Label", 22, TextAnchor.UpperCenter, accent);
             txt.text = $"{label}\n{level}";
-            Theme.StretchFull(txt.rectTransform);
+            var txtRect = txt.rectTransform;
+            txtRect.anchorMin = new Vector2(0f, 0.04f);
+            txtRect.anchorMax = new Vector2(1f, 0.52f);
+            txtRect.offsetMin = Vector2.zero;
+            txtRect.offsetMax = Vector2.zero;
         }
     }
 }

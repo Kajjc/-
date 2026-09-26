@@ -114,14 +114,23 @@ namespace Arena.UI
 
             if (Application.platform != RuntimePlatform.WebGLPlayer)
             {
+                var overlayGo = new GameObject("CornerOverlay");
+                overlayGo.transform.SetParent(canvasGo.transform, false);
+                var overlayCanvas = overlayGo.AddComponent<Canvas>();
+                overlayCanvas.overrideSorting = true;
+                overlayCanvas.sortingOrder = 100;
+                overlayGo.AddComponent<GraphicRaycaster>();
+                var overlayRoot = (RectTransform)overlayGo.transform;
+                StretchFull(overlayRoot);
+
                 const float size = 40f;
                 const float gap = 12f;
                 const float rightEdge = -12f;
                 const float topEdge = -12f;
 
-                CreateCornerButton(root, "QuitButton", new Vector2(rightEdge, topEdge), size, Coral, null, "X", QuitGame);
+                CreateCornerButton(overlayRoot, "QuitButton", new Vector2(rightEdge, topEdge), size, Coral, null, "X", QuitGame);
                 if (showMenuButton)
-                    CreateCornerButton(root, "MenuButton", new Vector2(rightEdge - size - gap, topEdge), size, Teal, TryLoadSprite("Icons/icon_home"), null, () => OnRequestMainMenu?.Invoke());
+                    CreateCornerButton(overlayRoot, "MenuButton", new Vector2(rightEdge - size - gap, topEdge), size, Teal, TryLoadSprite("Icons/icon_home"), null, () => OnRequestMainMenu?.Invoke());
             }
 
             return root;
@@ -221,7 +230,7 @@ namespace Arena.UI
             button.colors = colors;
             if (onClick != null) button.onClick.AddListener(onClick);
 
-            var text = CreateText(go.transform, "Label", 22, TextAnchor.MiddleLeft, textColor);
+            var text = CreateText(go.transform, "Label", 24, TextAnchor.MiddleLeft, textColor);
             var textRect = text.rectTransform;
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
@@ -241,10 +250,10 @@ namespace Arena.UI
             if (onClick != null) button.onClick.AddListener(onClick);
 
             var layoutElement = go.AddComponent<LayoutElement>();
-            layoutElement.minHeight = 48;
-            layoutElement.minWidth = 200;
+            layoutElement.minHeight = 50;
+            layoutElement.minWidth = 185;
 
-            text = CreateText(go.transform, "Label", 20, TextAnchor.MiddleCenter, Parchment);
+            text = CreateText(go.transform, "Label", 22, TextAnchor.MiddleCenter, Parchment);
             var textRect = text.rectTransform;
             StretchFull(textRect);
             text.text = label;
@@ -276,7 +285,7 @@ namespace Arena.UI
         public static void CreateOptionCard(Transform parent, float anchorMinX, float anchorMaxX, float anchorMinY, float anchorMaxY,
             string title, string subtitle, Color accent, UnityEngine.Events.UnityAction onClick)
         {
-            var card = CreatePanel(parent, $"Option_{title}", new Color(Navy.r, Navy.g, Navy.b, 0.5f));
+            var card = CreatePanel(parent, $"Option_{title}", new Color(Navy.r, Navy.g, Navy.b, 0.55f));
             card.anchorMin = new Vector2(anchorMinX, anchorMinY);
             card.anchorMax = new Vector2(anchorMaxX, anchorMaxY);
             card.offsetMin = Vector2.zero;
@@ -410,7 +419,7 @@ namespace Arena.UI
             }
             else
             {
-                background.color = new Color(Parchment.r, Parchment.g, Parchment.b, 0.06f);
+                background.color = new Color(1f, 1f, 1f, 0.12f);
                 text.color = Parchment;
             }
         }

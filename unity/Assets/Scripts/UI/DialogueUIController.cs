@@ -23,12 +23,14 @@ namespace Arena.UI
         private GameObject portraitTint;
         private Image moodBarImage;
         private TMP_Text moodText;
+        private Image moodSquare;
         private TMP_Text opponentRoleText;
         private RectTransform pipsRow;
         private TMP_Text opponentText;
         private RectTransform optionsContainer;
         private RectTransform endPanel;
         private RectTransform outcomeBadge;
+        private Image outcomeBadgeImage;
         private TMP_Text endTitleText;
         private RectTransform endContent;
 
@@ -62,13 +64,13 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "DialogueCanvas");
 
-            var fullBackdrop = Theme.CreatePanel(root, "FullBackdrop", new Color(Theme.Navy.r, Theme.Navy.g, Theme.Navy.b, 0.55f));
+            var fullBackdrop = Theme.CreatePanel(root, "FullBackdrop", new Color(Theme.Navy.r, Theme.Navy.g, Theme.Navy.b, 0.65f));
             Theme.StretchFull(fullBackdrop);
 
             portrait = Theme.CreatePanel(root, "Portrait", Theme.Slate);
             portraitImage = portrait.GetComponent<Image>();
-            portrait.anchorMin = new Vector2(0.05f, 0.82f);
-            portrait.anchorMax = new Vector2(0.16f, 0.95f);
+            portrait.anchorMin = new Vector2(0.03f, 0.72f);
+            portrait.anchorMax = new Vector2(0.20f, 0.95f);
             portrait.offsetMin = Vector2.zero;
             portrait.offsetMax = Vector2.zero;
             var portraitTintRect = Theme.CreatePanel(portrait, "Tint", new Color(Theme.Teal.r, Theme.Teal.g, Theme.Teal.b, 0.5f));
@@ -85,16 +87,25 @@ namespace Arena.UI
             moodBarRect.offsetMax = Vector2.zero;
             moodBarImage = moodBarRect.GetComponent<Image>();
 
-            moodText = Theme.CreateText(root, "MoodLabel", 15, TextAnchor.MiddleLeft, Theme.Teal);
+            var moodSquareGo = new GameObject("MoodSquare", typeof(RectTransform));
+            moodSquareGo.transform.SetParent(root, false);
+            var moodSquareRect = (RectTransform)moodSquareGo.transform;
+            moodSquareRect.anchorMin = new Vector2(0.22f, 0.75f);
+            moodSquareRect.anchorMax = new Vector2(0.245f, 0.79f);
+            moodSquareRect.offsetMin = Vector2.zero;
+            moodSquareRect.offsetMax = Vector2.zero;
+            moodSquare = moodSquareGo.AddComponent<Image>();
+
+            moodText = Theme.CreateText(root, "MoodLabel", 20, TextAnchor.MiddleLeft, Theme.Parchment);
             var moodTextRect = moodText.rectTransform;
-            moodTextRect.anchorMin = new Vector2(0.18f, 0.8f);
-            moodTextRect.anchorMax = new Vector2(0.6f, 0.855f);
+            moodTextRect.anchorMin = new Vector2(0.25f, 0.74f);
+            moodTextRect.anchorMax = new Vector2(0.6f, 0.80f);
             moodTextRect.offsetMin = Vector2.zero;
             moodTextRect.offsetMax = Vector2.zero;
 
-            opponentRoleText = Theme.CreateText(root, "OpponentRole", 20, TextAnchor.UpperLeft, Theme.Parchment);
+            opponentRoleText = Theme.CreateText(root, "OpponentRole", 22, TextAnchor.UpperLeft, Theme.Parchment);
             var roleRect = opponentRoleText.rectTransform;
-            roleRect.anchorMin = new Vector2(0.18f, 0.88f);
+            roleRect.anchorMin = new Vector2(0.22f, 0.84f);
             roleRect.anchorMax = new Vector2(0.6f, 0.95f);
             roleRect.offsetMin = Vector2.zero;
             roleRect.offsetMax = Vector2.zero;
@@ -102,20 +113,20 @@ namespace Arena.UI
             var pipsGo = new GameObject("Pips", typeof(RectTransform));
             pipsGo.transform.SetParent(root, false);
             pipsRow = (RectTransform)pipsGo.transform;
-            pipsRow.anchorMin = new Vector2(0.6f, 0.86f);
-            pipsRow.anchorMax = new Vector2(0.88f, 0.95f);
+            pipsRow.anchorMin = new Vector2(0.68f, 0.78f);
+            pipsRow.anchorMax = new Vector2(0.94f, 0.95f);
             pipsRow.offsetMin = Vector2.zero;
             pipsRow.offsetMax = Vector2.zero;
             var pipsLayout = pipsGo.AddComponent<HorizontalLayoutGroup>();
-            pipsLayout.spacing = 18;
+            pipsLayout.spacing = 24;
             pipsLayout.childAlignment = TextAnchor.MiddleRight;
             pipsLayout.childForceExpandWidth = false;
             pipsLayout.childForceExpandHeight = true;
 
             opponentText = Theme.CreateText(root, "OpponentLine", 28, TextAnchor.UpperLeft, Theme.Parchment);
             var opponentRect = opponentText.rectTransform;
-            opponentRect.anchorMin = new Vector2(0.05f, 0.55f);
-            opponentRect.anchorMax = new Vector2(0.95f, 0.8f);
+            opponentRect.anchorMin = new Vector2(0.05f, 0.45f);
+            opponentRect.anchorMax = new Vector2(0.95f, 0.7f);
             opponentRect.offsetMin = Vector2.zero;
             opponentRect.offsetMax = Vector2.zero;
             opponentTextGroup = opponentText.gameObject.AddComponent<CanvasGroup>();
@@ -130,7 +141,7 @@ namespace Arena.UI
             optionsGroup = optionsGo.AddComponent<CanvasGroup>();
             var layout = optionsGo.AddComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(24, 24, 16, 16);
-            layout.spacing = 14;
+            layout.spacing = 7;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
             layout.childControlHeight = true;
@@ -145,11 +156,13 @@ namespace Arena.UI
             Theme.StretchFull(endPanel);
             endPanel.gameObject.SetActive(false);
 
-            outcomeBadge = Theme.CreatePanel(endPanel, "OutcomeBadge", Theme.Amber);
-            outcomeBadge.anchorMin = new Vector2(0.06f, 0.84f);
-            outcomeBadge.anchorMax = new Vector2(0.13f, 0.93f);
+            outcomeBadge = Theme.CreatePanel(endPanel, "OutcomeBadge", new Color(0f, 0f, 0f, 0f));
+            outcomeBadge.anchorMin = new Vector2(0.06f, 0.82f);
+            outcomeBadge.anchorMax = new Vector2(0.13f, 0.95f);
             outcomeBadge.offsetMin = Vector2.zero;
             outcomeBadge.offsetMax = Vector2.zero;
+            outcomeBadgeImage = outcomeBadge.GetComponent<Image>();
+            outcomeBadgeImage.preserveAspect = true;
 
             endTitleText = Theme.CreateText(endPanel, "EndTitle", 32, TextAnchor.MiddleLeft, Theme.Parchment);
             var titleRect = endTitleText.rectTransform;
@@ -248,14 +261,13 @@ namespace Arena.UI
             button.targetGraphic = image;
             button.interactable = available;
             if (onClick != null) button.onClick.AddListener(onClick);
-            go.AddComponent<LayoutElement>().minHeight = 64;
 
             var rowLayout = go.AddComponent<HorizontalLayoutGroup>();
-            rowLayout.padding = new RectOffset(8, 8, 14, 14);
+            rowLayout.padding = new RectOffset(18, 18, 14, 14);
             rowLayout.spacing = 10;
             rowLayout.childAlignment = TextAnchor.MiddleLeft;
             rowLayout.childForceExpandWidth = false;
-            rowLayout.childForceExpandHeight = true;
+            rowLayout.childForceExpandHeight = false;
             rowLayout.childControlWidth = true;
             rowLayout.childControlHeight = true;
 
@@ -267,7 +279,6 @@ namespace Arena.UI
             if (!available)
                 foreach (var req in engine.GetMissingRequirements(option))
                     AddSkillRequirementBadge(go.transform, req);
-
         }
 
         private void AddSkillRequirementBadge(Transform parent, SkillRequirement requirement)
@@ -323,6 +334,7 @@ namespace Arena.UI
             {
                 portraitImage.sprite = sprite;
                 portraitImage.color = Color.white;
+                portraitImage.preserveAspect = true;
                 portraitTint.SetActive(false);
             }
             else
@@ -374,7 +386,8 @@ namespace Arena.UI
             }
 
             moodBarImage.color = color;
-            moodText.color = color;
+            moodSquare.color = color;
+            moodText.color = Theme.Parchment;
             moodText.text = label;
             UpdatePortraitSprite(moodSuffix);
         }
@@ -383,28 +396,75 @@ namespace Arena.UI
         {
             var groupGo = new GameObject($"Pip_{skillId}", typeof(RectTransform));
             groupGo.transform.SetParent(pipsRow, false);
-            var layout = groupGo.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 4;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = true;
-            layout.childAlignment = TextAnchor.MiddleLeft;
-            var sizeFit = groupGo.AddComponent<ContentSizeFitter>();
-            sizeFit.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            var groupLayout = groupGo.AddComponent<VerticalLayoutGroup>();
+            groupLayout.spacing = 6;
+            groupLayout.childForceExpandWidth = false;
+            groupLayout.childForceExpandHeight = false;
+            groupLayout.childAlignment = TextAnchor.MiddleLeft;
+            groupLayout.childControlWidth = true;
+            groupLayout.childControlHeight = true;
+            var groupFit = groupGo.AddComponent<ContentSizeFitter>();
+            groupFit.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            groupFit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var accent = Theme.ForSkill(skillId);
-            var labelText = Theme.CreateText(groupGo.transform, "Label", 15, TextAnchor.MiddleLeft, Theme.Muted);
+
+            var headerGo = new GameObject("Header", typeof(RectTransform));
+            headerGo.transform.SetParent(groupGo.transform, false);
+            var headerLayout = headerGo.AddComponent<HorizontalLayoutGroup>();
+            headerLayout.spacing = 8;
+            headerLayout.childForceExpandWidth = false;
+            headerLayout.childForceExpandHeight = false;
+            headerLayout.childAlignment = TextAnchor.MiddleLeft;
+            headerLayout.childControlWidth = true;
+            headerLayout.childControlHeight = true;
+
+            var iconGo = new GameObject("Icon", typeof(RectTransform));
+            iconGo.transform.SetParent(headerGo.transform, false);
+            var iconLE = iconGo.AddComponent<LayoutElement>();
+            iconLE.preferredWidth = 44;
+            iconLE.preferredHeight = 44;
+            iconLE.minWidth = 44;
+            iconLE.minHeight = 44;
+            var iconImage = iconGo.AddComponent<Image>();
+            var sprite = Theme.TryLoadSprite($"Icons/skill_{skillId}");
+            if (sprite != null)
+            {
+                iconImage.sprite = sprite;
+                iconImage.color = Color.white;
+                iconImage.preserveAspect = true;
+            }
+            else
+            {
+                iconImage.color = accent;
+            }
+
+            var labelText = Theme.CreateText(headerGo.transform, "Label", 20, TextAnchor.MiddleLeft, Theme.Muted);
             labelText.text = label;
-            labelText.gameObject.AddComponent<LayoutElement>().minWidth = 72;
+
+            var dotsGo = new GameObject("Dots", typeof(RectTransform));
+            dotsGo.transform.SetParent(groupGo.transform, false);
+            var dotsLayout = dotsGo.AddComponent<HorizontalLayoutGroup>();
+            dotsLayout.spacing = 5;
+            dotsLayout.childForceExpandWidth = false;
+            dotsLayout.childForceExpandHeight = false;
+            dotsLayout.childAlignment = TextAnchor.MiddleLeft;
+            dotsLayout.childControlWidth = true;
+            dotsLayout.childControlHeight = true;
+            var dotsFit = dotsGo.AddComponent<ContentSizeFitter>();
+            dotsFit.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             for (int i = 1; i <= 3; i++)
             {
                 var dotGo = new GameObject($"Dot{i}", typeof(RectTransform));
-                dotGo.transform.SetParent(groupGo.transform, false);
-                var dotLayout = dotGo.AddComponent<LayoutElement>();
-                dotLayout.minWidth = 9;
-                dotLayout.minHeight = 9;
-                var image = dotGo.AddComponent<Image>();
-                image.color = i <= level ? accent : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.15f);
+                dotGo.transform.SetParent(dotsGo.transform, false);
+                var dotLE = dotGo.AddComponent<LayoutElement>();
+                dotLE.preferredWidth = 26;
+                dotLE.preferredHeight = 7;
+                dotLE.minWidth = 26;
+                dotLE.minHeight = 7;
+                var img = dotGo.AddComponent<Image>();
+                img.color = i <= level ? accent : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.15f);
             }
         }
 
@@ -443,7 +503,21 @@ namespace Arena.UI
         private void RenderEndScreen()
         {
             var node = engine.CurrentNode;
-            outcomeBadge.GetComponent<Image>().color = Theme.ForOutcome(node.outcome);
+
+            // Иконка исхода — Resources/Icons/outcome_<win|compromise|fail>.png
+            // Если файла нет — откат на цветную плашку (старое поведение).
+            var outcomeSprite = Theme.TryLoadSprite($"Icons/outcome_{node.outcome}");
+            if (outcomeSprite != null)
+            {
+                outcomeBadgeImage.sprite = outcomeSprite;
+                outcomeBadgeImage.color = Color.white;
+            }
+            else
+            {
+                outcomeBadgeImage.sprite = null;
+                outcomeBadgeImage.color = Theme.ForOutcome(node.outcome);
+            }
+
             endTitleText.text = OutcomeTitle(node.outcome);
 
             foreach (Transform child in endContent) Destroy(child.gameObject);
@@ -676,21 +750,25 @@ namespace Arena.UI
             layout.padding = new RectOffset(10, 10, 8, 8);
             layout.spacing = 10;
             layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = true;
+            layout.childForceExpandHeight = false;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childAlignment = TextAnchor.MiddleLeft;
 
             var iconGo = new GameObject("Icon", typeof(RectTransform));
-            iconGo.transform.SetParent(card, false);
-            iconGo.AddComponent<LayoutElement>().minWidth = 40;
+            iconGo.transform.SetParent(card.transform, false);
+            var iconLE = iconGo.AddComponent<LayoutElement>();
+            iconLE.preferredWidth = 40;
+            iconLE.preferredHeight = 40;
+            iconLE.minWidth = 40;
+            iconLE.minHeight = 40;
             var iconImage = iconGo.AddComponent<Image>();
-            iconImage.preserveAspect = true;
             var sprite = Theme.TryLoadSprite($"Icons/badge_{def.Id}");
             if (sprite != null)
             {
                 iconImage.sprite = sprite;
                 iconImage.color = Color.white;
+                iconImage.preserveAspect = true;
             }
             else
             {
@@ -698,7 +776,7 @@ namespace Arena.UI
             }
 
             var textGo = new GameObject("Text", typeof(RectTransform));
-            textGo.transform.SetParent(card, false);
+            textGo.transform.SetParent(card.transform, false);
             textGo.AddComponent<LayoutElement>().flexibleWidth = 1;
             var textLayout = textGo.AddComponent<VerticalLayoutGroup>();
             textLayout.childForceExpandWidth = true;
