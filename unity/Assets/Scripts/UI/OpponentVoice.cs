@@ -39,11 +39,11 @@ namespace Arena.UI
         // кусков не звучали механически. Громкость — доля от выровненных по RMS клипов.
         private static readonly Dictionary<OpponentMood, (float pitch, float jitter, float volume)> Tuning = new Dictionary<OpponentMood, (float, float, float)>
         {
-            { OpponentMood.Neutral, (1.0f, 0.06f, 0.55f) },
-            { OpponentMood.Calm, (1.0f, 0.06f, 0.55f) },
-            { OpponentMood.Pleased, (1.04f, 0.07f, 0.6f) },
-            { OpponentMood.Wary, (1.0f, 0.06f, 0.55f) },
-            { OpponentMood.Irritated, (1.0f, 0.07f, 0.6f) },
+            { OpponentMood.Neutral,   (0.92f, 0.06f, 0.32f) },
+            { OpponentMood.Calm,      (0.92f, 0.06f, 0.32f) },
+            { OpponentMood.Pleased,   (0.96f, 0.07f, 0.36f) },
+            { OpponentMood.Wary,      (0.92f, 0.06f, 0.32f) },
+            { OpponentMood.Irritated, (0.95f, 0.07f, 0.36f) },
         };
 
         private readonly Dictionary<OpponentMood, AudioClip[]> clipsByMood = new Dictionary<OpponentMood, AudioClip[]>();

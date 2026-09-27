@@ -92,8 +92,8 @@ namespace Arena.UI
             // по горизонтали логотип им не мешает. По вертикали ниже строки сферы.
             Theme.CreateLogo(root, new Vector2(0.375f, 0.255f), new Vector2(0.625f, 0.625f));
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleLeft, Theme.Teal);
-            eyebrow.text = showSkillEditor ? "АДМИНИСТРАТОР — НАСТРОЙКА КЕЙСА" : "НАСТРОЙКА СЦЕНАРИЯ";
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 30, TextAnchor.MiddleLeft, Theme.Teal);
+            eyebrow.text = showSkillEditor ? "НАСТРОЙКИ АДМИНИСТРАТОРА" : "НАСТРОЙКА СЦЕНАРИЯ";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.06f, 0.9f);
             eyebrowRect.anchorMax = new Vector2(0.7f, 0.97f);
@@ -111,10 +111,7 @@ namespace Arena.UI
             BuildChipRow("Сфера", DistinctInOrder(library.Select(s => s.meta.sphere)), y, sphereChips, v =>
             {
                 selectedSphere = v;
-                // Тон принадлежит конкретной теме, а не сфере в целом (например,
-                // "уклончивый" есть только у сюжета HR "Контроль договорённостей") —
-                // при смене сферы подсветка тона иначе осталась бы на значении,
-                // которого для новой сферы вообще не существует.
+
                 if (!library.Any(s => s.meta.sphere == selectedSphere && s.meta.tone == selectedTone))
                 {
                     var firstToneForSphere = library.FirstOrDefault(s => s.meta.sphere == selectedSphere)?.meta.tone;
@@ -129,15 +126,6 @@ namespace Arena.UI
             BuildGameModeRow(y);
             y -= FieldStep;
 
-            // Более высокая строка, чем у остальных чипов: "напористый / скептический"
-            // при увеличенном шрифте переносится на 2 строки, и стандартных 0.06
-            // высоты не хватает — текст вылезал бы за пределы плашки чипа. Сами чипы
-            // не создаются здесь — только контейнер и подпись; набор тонов зависит от
-            // selectedSphere и пересобирается в RebuildToneChips (вызывается из Show()
-            // и при смене сферы), а не строится один раз на весь список тонов сразу.
-            // Подпись поднята на 0.04 над обычным местом: строка тона выше остальных
-            // (0.1 вместо 0.06), и стандартная подпись (y+0.065..0.11) наезжала на
-            // верх самих чипов.
             BuildFieldLabel("ТОН СОБЕСЕДНИКА", y + 0.04f);
             var toneRowGo = new GameObject("ТонСобеседникаRow", typeof(RectTransform));
             toneRowGo.transform.SetParent(root, false);
@@ -155,8 +143,8 @@ namespace Arena.UI
             toneLayout.childAlignment = TextAnchor.MiddleLeft;
 
             var previewStrip = Theme.CreatePanel(root, "PreviewStrip", new Color(Theme.Teal.r, Theme.Teal.g, Theme.Teal.b, 0.14f));
-            previewStrip.anchorMin = new Vector2(0.06f, 0.06f);
-            previewStrip.anchorMax = new Vector2(0.94f, 0.22f);
+            previewStrip.anchorMin = new Vector2(0.06f, 0.05f);
+            previewStrip.anchorMax = new Vector2(0.94f, 0.24f);
             previewStrip.offsetMin = Vector2.zero;
             previewStrip.offsetMax = Vector2.zero;
 
@@ -169,8 +157,8 @@ namespace Arena.UI
 
             rolePreviewText = Theme.CreateText(previewStrip, "RoleText", 17, TextAnchor.UpperLeft, Theme.Muted);
             var roleTextRect = rolePreviewText.rectTransform;
-            roleTextRect.anchorMin = new Vector2(0.03f, 0.06f);
-            roleTextRect.anchorMax = new Vector2(0.68f, 0.5f);
+            roleTextRect.anchorMin = new Vector2(0.03f, 0.05f);
+            roleTextRect.anchorMax = new Vector2(0.68f, 0.40f);
             roleTextRect.offsetMin = Vector2.zero;
             roleTextRect.offsetMax = Vector2.zero;
 
@@ -183,6 +171,9 @@ namespace Arena.UI
             var ctaLabel = ctaButton.GetComponentInChildren<TMP_Text>();
             ctaLabel.alignment = TextAlignmentOptions.Center;
             Theme.StretchFull((RectTransform)ctaButton.transform);
+
+            var logoTransform = root.Find("Logo");
+            if (logoTransform != null) logoTransform.SetAsLastSibling();
         }
 
         private void BuildSkillsRow(float y)
@@ -440,17 +431,6 @@ namespace Arena.UI
                 });
                 difficultyDots.Add(dotImage);
             }
-
-            // "N из 3" — прямо за квадратиками, в той же строке (раньше стояло отдельной
-            // подписью с якорем 0.42 ширины — далеко от квадратиков и ровно там, где
-            // теперь логотип).
-            var gapGo = new GameObject("Gap", typeof(RectTransform));
-            gapGo.transform.SetParent(difficultyRow, false);
-            gapGo.AddComponent<LayoutElement>().minWidth = 10;
-
-            var difficultyLabel = Theme.CreateText(difficultyRow, "DifficultyValue", 17, TextAnchor.MiddleLeft, Theme.Muted);
-            difficultyLabel.name = "DifficultyValueText";
-            difficultyValueText = difficultyLabel;
         }
 
         private void UpdatePreview()
@@ -467,7 +447,7 @@ namespace Arena.UI
             if (previewScenario == null) return;
 
             scenarioPreviewText.text = $"{previewScenario.meta.sphere} — {previewScenario.meta.topic}";
-            rolePreviewText.text = previewScenario.meta.opponentRole;
+            rolePreviewText.text = Theme.Capitalize(previewScenario.meta.opponentRole);
         }
 
         private void OnStartClicked()

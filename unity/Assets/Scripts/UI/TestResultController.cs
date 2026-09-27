@@ -59,7 +59,7 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "TestResultCanvas");
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleCenter, Theme.Amber);
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 36, TextAnchor.MiddleCenter, Theme.Amber);
             eyebrow.text = "РЕЗУЛЬТАТ ТЕСТА";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.1f, 0.86f);
@@ -137,25 +137,34 @@ namespace Arena.UI
             recRoleRect.offsetMin = Vector2.zero;
             recRoleRect.offsetMax = Vector2.zero;
 
-            // --- Кнопки ---
+            // --- Кнопки: рядом, одинаковая высота, выровнены по краям карточки «РЕКОМЕНДУЕМ» ---
+            const float buttonMinY = 0.07f;
+            const float buttonMaxY = 0.17f;
+
+            // Правая — главная (solid amber).
             var startBtn = Theme.CreateButton(root, "Начать переговоры →",
                 Theme.Amber, Theme.Navy,
                 () => { Hide(); onStart?.Invoke(recommended, skills); });
             var startRect = (RectTransform)startBtn.transform;
-            startRect.anchorMin = new Vector2(0.30f, 0.06f);
-            startRect.anchorMax = new Vector2(0.70f, 0.15f);
+            startRect.anchorMin = new Vector2(0.52f, buttonMinY);
+            startRect.anchorMax = new Vector2(0.90f, buttonMaxY);
             startRect.offsetMin = Vector2.zero;
             startRect.offsetMax = Vector2.zero;
+            // Центрируем текст по кнопке (не прижимаем влево, как в дефолте).
+            var startLabel = startBtn.GetComponentInChildren<TMP_Text>();
+            startLabel.alignment = TextAlignmentOptions.Center;
 
+            // Левая — вторичная (полупрозрачный амбер + амберный текст).
             var configBtn = Theme.CreateButton(root, "Настроить сценарий",
-                new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.06f),
-                Theme.Muted,
+                Theme.Amber, Theme.Navy,
                 () => { Hide(); onConfigure?.Invoke(skills); });
             var configRect = (RectTransform)configBtn.transform;
-            configRect.anchorMin = new Vector2(0.30f, 0.01f);
-            configRect.anchorMax = new Vector2(0.70f, 0.055f);
+            configRect.anchorMin = new Vector2(0.10f, buttonMinY);
+            configRect.anchorMax = new Vector2(0.48f, buttonMaxY);
             configRect.offsetMin = Vector2.zero;
             configRect.offsetMax = Vector2.zero;
+            var configLabel = configBtn.GetComponentInChildren<TMP_Text>();
+            configLabel.alignment = TextAlignmentOptions.Center;
         }
 
         private void AddSkillChip(Transform parent, string label, string skillId, int level, Color accent)
