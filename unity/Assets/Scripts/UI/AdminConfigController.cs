@@ -37,6 +37,7 @@ namespace Arena.UI
 
         private List<ScenarioData> library;
         private bool showSkillEditor;
+        private bool lastBuildHadSkillEditor;
         private PlayerSkills workingSkills;
         private string selectedSphere;
         private string selectedTone;
@@ -58,6 +59,18 @@ namespace Arena.UI
             selectedSphere = library[0].meta.sphere;
             selectedTone = library[0].meta.tone;
             selectedDifficulty = library[0].meta.difficulty;
+
+            if (root != null && lastBuildHadSkillEditor != showSkillEditor)
+            {
+                Destroy(root.gameObject);
+                root = null;
+                skillButtons.Clear();
+                sphereChips.Clear();
+                toneChips.Clear();
+                difficultyDots.Clear();
+                gameModeButtons.Clear();
+            }
+            lastBuildHadSkillEditor = showSkillEditor;
 
             BuildUiIfNeeded();
             RebuildToneChips();
@@ -255,11 +268,15 @@ namespace Arena.UI
 
         private void UpdateSkillButtonsVisual()
         {
+            if (!showSkillEditor) return;
+
             foreach (var skillId in SkillIds)
             {
+                if (!skillButtons.TryGetValue(skillId, out var buttons)) continue;
+
                 int current = workingSkills.GetLevel(skillId);
                 var accent = Theme.ForSkill(skillId);
-                foreach (var (level, bg, txt) in skillButtons[skillId])
+                foreach (var (level, bg, txt) in buttons)
                 {
                     bool selected = level == current;
                     bg.color = selected ? accent : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.08f);

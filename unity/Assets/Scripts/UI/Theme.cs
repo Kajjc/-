@@ -141,32 +141,14 @@ namespace Arena.UI
             const float rightEdge = -12f;
             const float topEdge = -12f;
 
-            bool showQuitButton = Application.platform != RuntimePlatform.WebGLPlayer;
-            if (showQuitButton)
-                CreateCornerButton(overlayRoot, "QuitButton", new Vector2(rightEdge, topEdge), size, Coral, null, "X", QuitGame);
+            CreateCornerButton(overlayRoot, "QuitButton", new Vector2(rightEdge, topEdge), size, Color.white, TryLoadSprite("Icons/icon_close"), null, QuitGame);
 
             if (showMenuButton)
-            {
-                float menuX = showQuitButton ? rightEdge - size - gap : rightEdge;
-                CreateCornerButton(overlayRoot, "MenuButton", new Vector2(menuX, topEdge), size, Teal, TryLoadSprite("Icons/icon_home"), null, () => OnRequestMainMenu?.Invoke());
-            }
+                CreateCornerButton(overlayRoot, "MenuButton", new Vector2(rightEdge - size - gap, topEdge), size, Teal, TryLoadSprite("Icons/icon_home"), null, () => OnRequestMainMenu?.Invoke());
 
             return root;
         }
 
-        // Общий билдер маленькой квадратной кнопки в правом верхнем углу — общий
-        // для выхода и возврата в меню, чтобы не дублировать вёрстку дважды.
-        // yOffsetFromTop растёт по мере добавления новых кнопок в стопку вниз.
-        //
-        // Компактный размер (28x28) и минимальный отступ — почти на всех экранах
-        // у самого верхнего правого края уже что-то есть (пипсы навыков в диалоге
-        // до x=0.95, счётчик вопроса в тесте навыков и "← Назад" в теории до
-        // x=0.94/y=0.97) — проверено, что эта колонка кнопок (правее x≈0.97) их
-        // не перекрывает. Текстовая подпись — только ASCII (кнопка выхода — "X",
-        // не "×"): кастомный TMP-шрифт проекта собран лишь из Basic Latin +
-        // кириллицы (см. TmpFontBuilder.cs, урок К1), символа умножения в нём
-        // может не быть — поэтому для кнопки меню вместо буквы используется
-        // отдельная иконка-домик (Resources/Icons/icon_home.png).
         private static void CreateCornerButton(RectTransform canvasRoot, string name, Vector2 anchoredPos, float size, Color accent, Sprite icon, string textLabel, UnityEngine.Events.UnityAction onClick)
         {
             var buttonRect = CreatePanel(canvasRoot, name, new Color(0f, 0f, 0f, 0f));
@@ -209,11 +191,11 @@ namespace Arena.UI
 
         public static void QuitGame()
         {
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
+            #if UNITY_EDITOR
+                            UnityEditor.EditorApplication.isPlaying = false;
+            #elif UNITY_WEBGL
+                Debug.Log("[WebGL] X pressed — closing is browser-restricted.");
+            #endif
         }
 
         public static RectTransform CreatePanel(Transform parent, string name, Color color)

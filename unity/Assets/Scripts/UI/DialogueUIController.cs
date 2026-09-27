@@ -203,8 +203,8 @@ namespace Arena.UI
             var pipsGo = new GameObject("Pips", typeof(RectTransform));
             pipsGo.transform.SetParent(root, false);
             pipsRow = (RectTransform)pipsGo.transform;
-            pipsRow.anchorMin = new Vector2(PipsLeft, 0.86f);
-            pipsRow.anchorMax = new Vector2(0.95f, 0.95f);
+            pipsRow.anchorMin = new Vector2(PipsLeft, 0.80f);
+            pipsRow.anchorMax = new Vector2(0.95f, 0.92f);
             pipsRow.offsetMin = Vector2.zero;
             pipsRow.offsetMax = Vector2.zero;
             var pipsLayout = pipsGo.AddComponent<HorizontalLayoutGroup>();
@@ -250,34 +250,21 @@ namespace Arena.UI
             Theme.StretchFull(endPanel);
             endPanel.gameObject.SetActive(false);
 
-            // Значок исхода: Resources/Icons/outcome_<win|compromise|fail>.png (цветной
-            // квадрат акцента исхода, если файла нет — RenderEndScreen). Фиксированный
-            // квадрат, а не доли канваса: раньше плашка была процентной и на нестандартном
-            // окне вытягивалась бы вместе с картинкой. Верхний левый угол — там же, где был
-            // прежний бейдж, заголовок исхода стоит правее.
+        
             outcomeBadge = Theme.CreatePanel(endPanel, "OutcomeBadge", Theme.Amber);
-            outcomeBadge.anchorMin = new Vector2(0.06f, 0.93f);
-            outcomeBadge.anchorMax = new Vector2(0.06f, 0.93f);
+            outcomeBadge.anchorMin = new Vector2(0.06f, 0.94f);
+            outcomeBadge.anchorMax = new Vector2(0.06f, 0.94f);
             outcomeBadge.pivot = new Vector2(0f, 1f);
             outcomeBadge.anchoredPosition = Vector2.zero;
-            outcomeBadge.sizeDelta = new Vector2(OutcomeIconSize, OutcomeIconSize);
+            outcomeBadge.sizeDelta = new Vector2(56f, 56f);
 
             endTitleText = Theme.CreateText(endPanel, "EndTitle", 32, TextAnchor.MiddleLeft, Theme.Parchment);
             var titleRect = endTitleText.rectTransform;
-            titleRect.anchorMin = new Vector2(0.16f, 0.84f);
-            titleRect.anchorMax = new Vector2(0.94f, 0.93f);
+            titleRect.anchorMin = new Vector2(0.14f, 0.85f);
+            titleRect.anchorMax = new Vector2(0.94f, 0.94f);
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            // Единый прокручиваемый блок (описание исхода -> баллы -> сильные
-            // стороны -> над чем поработать) вместо жёстких процентных зон —
-            // гипотеза Ю2 (docs/feature-hypotheses.md), методология —
-            // docs/eval-rubric.md §3.2. Раньше описание исхода (node.summary)
-            // рисовалось в отдельном блоке с фиксированной высотой на глаз —
-            // после углубления сценариев длинные сводки стали переполнять эту
-            // высоту и наезжать на разделы ниже (баллы по техникам и т.д.),
-            // которые сами не сдвигались. Теперь оно — первая строка того же
-            // прокручиваемого списка, высота считается автоматически.
             var scrollRoot = Theme.CreateScrollList(endPanel, "EndScroll", out endContent);
             scrollRoot.anchorMin = new Vector2(0.06f, 0.16f);
             scrollRoot.anchorMax = new Vector2(0.94f, 0.82f);
