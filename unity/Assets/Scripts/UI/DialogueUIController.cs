@@ -386,6 +386,12 @@ namespace Arena.UI
             var textColor = available ? Theme.Parchment : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.62f);
             var label = Theme.CreateText(go.transform, "Label", 22, TextAnchor.MiddleLeft, textColor);
             label.text = $"{number}.  {option.text}";
+            label.text = $"{number}.  {option.text}";
+            label.overflowMode = TextOverflowModes.Truncate;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 15;
+            label.fontSizeMax = 22;
+            label.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
             label.overflowMode = TextOverflowModes.Truncate;   // ← сообщает layout-системе реальную высоту
             label.enableAutoSizing = true;                     // ← длинный текст ужимается, а не вылезает
             label.fontSizeMin = 15;
