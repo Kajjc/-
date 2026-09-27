@@ -228,15 +228,13 @@ namespace Arena.UI
             opponentRect.offsetMax = Vector2.zero;
             opponentTextGroup = opponentText.gameObject.AddComponent<CanvasGroup>();
 
-            var optionsGo = new GameObject("Options", typeof(RectTransform));
-            optionsGo.transform.SetParent(root, false);
-            optionsContainer = (RectTransform)optionsGo.transform;
-            optionsContainer.anchorMin = new Vector2(0.05f, 0.05f);
-            optionsContainer.anchorMax = new Vector2(0.95f, 0.5f);
-            optionsContainer.offsetMin = Vector2.zero;
-            optionsContainer.offsetMax = Vector2.zero;
-            optionsGroup = optionsGo.AddComponent<CanvasGroup>();
-            var layout = optionsGo.AddComponent<VerticalLayoutGroup>();
+            var optionsScroll = Theme.CreateScrollList(root, "OptionsScroll", out optionsContainer);
+            optionsScroll.anchorMin = new Vector2(0.05f, 0.05f);
+            optionsScroll.anchorMax = new Vector2(0.95f, 0.5f);
+            optionsScroll.offsetMin = Vector2.zero;
+            optionsScroll.offsetMax = Vector2.zero;
+            optionsGroup = optionsScroll.gameObject.AddComponent<CanvasGroup>();
+            var layout = optionsContainer.GetComponent<VerticalLayoutGroup>();
             layout.spacing = 10;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
@@ -388,6 +386,10 @@ namespace Arena.UI
             var textColor = available ? Theme.Parchment : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.62f);
             var label = Theme.CreateText(go.transform, "Label", 22, TextAnchor.MiddleLeft, textColor);
             label.text = $"{number}.  {option.text}";
+            label.overflowMode = TextOverflowModes.Truncate;   // ← сообщает layout-системе реальную высоту
+            label.enableAutoSizing = true;                     // ← длинный текст ужимается, а не вылезает
+            label.fontSizeMin = 15;
+            label.fontSizeMax = 22;
             label.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
 
             if (!available)
