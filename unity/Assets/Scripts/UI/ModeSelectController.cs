@@ -34,41 +34,54 @@ namespace Arena.UI
         {
             if (root != null) return;
 
-            root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: false);
-            Theme.SetCanvasBackground(root, "Background/title");
+            root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: true);
+            Theme.SetCanvasBackground(root, "Backgrounds/title", scrimAlpha: 0.2f);
 
-            var logoGo = new GameObject("Logo", typeof(RectTransform));
-            logoGo.transform.SetParent(root, false);
-            var logoRect = (RectTransform)logoGo.transform;
-            logoRect.anchorMin = new Vector2(0.32f, 0.51f);
-            logoRect.anchorMax = new Vector2(0.68f, 0.95f);
-            logoRect.offsetMin = Vector2.zero;
-            logoRect.offsetMax = Vector2.zero;
-            var logoImage = logoGo.AddComponent<UnityEngine.UI.Image>();
-            logoImage.sprite = Theme.TryLoadSprite("Icons/arena_white");
-            logoImage.preserveAspect = true;
+            // Логотип (Theme.CreateLogo; надпись в нём перекрашена в светлый, иначе на
+            // тёмном меню пропадает) — сверху по центру. Если файла нет — прежняя
+            // текстовая надпись "АРЕНА ПЕРЕГОВОРОВ" на своём месте.
+            var logoRect = Theme.CreateLogo(root, new Vector2(0.25f, 0.665f), new Vector2(0.75f, 0.985f));
+            float titleMinY, titleMaxY;
+            if (logoRect != null)
+            {
+                titleMinY = 0.56f;
+                titleMaxY = 0.65f;
+            }
+            else
+            {
+                var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleCenter, Theme.Amber);
+                eyebrow.text = "АРЕНА ПЕРЕГОВОРОВ";
+                var eyebrowRect = eyebrow.rectTransform;
+                eyebrowRect.anchorMin = new Vector2(0.1f, 0.68f);
+                eyebrowRect.anchorMax = new Vector2(0.9f, 0.75f);
+                eyebrowRect.offsetMin = Vector2.zero;
+                eyebrowRect.offsetMax = Vector2.zero;
+                titleMinY = 0.58f;
+                titleMaxY = 0.68f;
+            }
 
-            var title = Theme.CreateText(root, "Title", 40, TextAnchor.MiddleCenter, Theme.Parchment);
+            var title = Theme.CreateText(root, "Title", 30, TextAnchor.MiddleCenter, Theme.Parchment);
             title.text = "С чего начнём?";
             var titleRect = title.rectTransform;
-            titleRect.anchorMin = new Vector2(0.1f, 0.36f);
-            titleRect.anchorMax = new Vector2(0.9f, 0.58f);
+            titleRect.anchorMin = new Vector2(0.1f, titleMinY);
+            titleRect.anchorMax = new Vector2(0.9f, titleMaxY);
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            Theme.CreateOptionCard(root, 0.06f, 0.34f, 0.08f, 0.41f,
+            // Три карточки: каждая ~28% ширины, промежутки по 2%.
+            Theme.CreateOptionCard(root, 0.06f, 0.34f, 0.22f, 0.55f,
                 "Тренировка",
                 "Сразу к переговорам — без теста. Сценарий подберётся автоматически.",
                 Theme.Sage,
                 () => onTraining?.Invoke());
 
-            Theme.CreateOptionCard(root, 0.36f, 0.64f, 0.08f, 0.41f,
+            Theme.CreateOptionCard(root, 0.36f, 0.64f, 0.22f, 0.55f,
                 "Тестирование",
                 "18 вопросов, ~2 минуты. Получи рекомендованный сценарий по навыкам.",
                 Theme.Amber,
                 () => onTesting?.Invoke());
 
-            Theme.CreateOptionCard(root, 0.66f, 0.94f, 0.08f, 0.41f,
+            Theme.CreateOptionCard(root, 0.66f, 0.94f, 0.22f, 0.55f,
                 "Настройки администратора",
                 "Уровень навыков и параметры сценария вручную — для тренера.",
                 Theme.Teal,

@@ -1,0 +1,56 @@
+/* Шаблон WebGL «Арена переговоров»: канвас на всё окно, поверх — экран загрузки.
+   Палитра — та же, что в игре (docs/visual-style-guide.md):
+   Navy #16233F, Amber #E8A33D, Parchment #F3EFE7. */
+
+html, body { height: 100%; margin: 0; padding: 0; background: #16233F; overflow: hidden }
+
+#unity-container { position: fixed; inset: 0 }
+#unity-canvas { display: block; width: 100%; height: 100%; background: #16233F }
+
+/* Экран загрузки: картинка "cover" + мягкое затемнение слева, где стоит логотип
+   (справа на картинке светится дверь — её не трогаем). */
+#loading {
+  position: absolute; inset: 0;
+  background: #16233F url('loading.jpg') center / cover no-repeat;
+  transition: opacity .6s ease;
+}
+#loading::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to right, rgba(22, 35, 63, .55) 0%, rgba(22, 35, 63, 0) 62%);
+}
+#loading.done { opacity: 0; pointer-events: none }
+
+/* Логотип и полоса — по центру тёмной стены слева от двери. В узком окне
+   (портрет/телефон) дверь всё равно уходит за край, поэтому — по центру экрана. */
+#loading-content {
+  position: absolute; left: 30%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center;
+}
+@media (max-aspect-ratio: 4/3) { #loading-content { left: 50% } }
+
+#loading-logo { display: block; height: min(46vh, 420px); width: auto; max-width: 80vw; object-fit: contain }
+
+#progress { width: min(60vw, 260px); height: 6px; margin-top: 26px; background: rgba(243, 239, 231, .18); overflow: hidden }
+#progress-fill { width: 0; height: 100%; background: #E8A33D; transition: width .2s ease-out }
+
+#loading-text {
+  margin-top: 12px; color: rgba(243, 239, 231, .82);
+  font: 500 13px/1 "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  letter-spacing: .14em; text-transform: uppercase; font-variant-numeric: tabular-nums;
+}
+
+/* Кнопка "на весь экран" (в шаблоне Unity по умолчанию она была в нижней панели,
+   которой у нас нет). Справа сверху — там в WebGL нет кнопок выхода/меню. */
+#fullscreen-button {
+  position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; padding: 0;
+  border: 0; background: rgba(22, 35, 63, .55); color: #F3EFE7; cursor: pointer;
+  opacity: .55; transition: opacity .15s ease;
+}
+#fullscreen-button:hover, #fullscreen-button:focus-visible { opacity: 1 }
+#fullscreen-button svg { display: block; margin: auto }
+
+#unity-warning { position: absolute; left: 50%; top: 5%; transform: translate(-50%); background: white; padding: 10px; display: none }
+
+@media (prefers-reduced-motion: reduce) {
+  #loading, #progress-fill, #fullscreen-button { transition: none }
+}

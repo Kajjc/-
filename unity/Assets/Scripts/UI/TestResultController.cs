@@ -59,7 +59,7 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "TestResultCanvas");
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 28, TextAnchor.MiddleCenter, Theme.Amber);
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleCenter, Theme.Amber);
             eyebrow.text = "РЕЗУЛЬТАТ ТЕСТА";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.1f, 0.86f);
@@ -88,7 +88,9 @@ namespace Arena.UI
             var rowGo = new GameObject("SkillsRow", typeof(RectTransform));
             rowGo.transform.SetParent(root, false);
             var row = (RectTransform)rowGo.transform;
-            row.anchorMin = new Vector2(0.15f, 0.52f);
+            // Чипы выше прежних (0.55-0.72): иконка навыка в них 128 px, а в широком окне
+            // (канвас ~2.4:1, высота ~650) 0.17 высоты — это всего ~110 px.
+            row.anchorMin = new Vector2(0.15f, 0.51f);
             row.anchorMax = new Vector2(0.85f, 0.74f);
             row.offsetMin = Vector2.zero;
             row.offsetMax = Vector2.zero;
@@ -107,7 +109,7 @@ namespace Arena.UI
             var card = Theme.CreatePanel(root, "RecommendedCard",
                 new Color(Theme.Amber.r, Theme.Amber.g, Theme.Amber.b, 0.12f));
             card.anchorMin = new Vector2(0.1f, 0.20f);
-            card.anchorMax = new Vector2(0.9f, 0.48f);
+            card.anchorMax = new Vector2(0.9f, 0.49f);
             card.offsetMin = Vector2.zero;
             card.offsetMax = Vector2.zero;
 
@@ -128,7 +130,7 @@ namespace Arena.UI
             recTitleRect.offsetMax = Vector2.zero;
 
             var recRole = Theme.CreateText(card, "RecRole", 17, TextAnchor.MiddleLeft, Theme.Muted);
-            recRole.text = $"Оппонент: {Theme.Capitalize(recommended.meta.opponentRole)}";
+            recRole.text = $"Оппонент: {recommended.meta.opponentRole}";
             var recRoleRect = recRole.rectTransform;
             recRoleRect.anchorMin = new Vector2(0.05f, 0.08f);
             recRoleRect.anchorMax = new Vector2(0.95f, 0.38f);
@@ -140,8 +142,8 @@ namespace Arena.UI
                 Theme.Amber, Theme.Navy,
                 () => { Hide(); onStart?.Invoke(recommended, skills); });
             var startRect = (RectTransform)startBtn.transform;
-            startRect.anchorMin = new Vector2(0.52f, 0.06f);
-            startRect.anchorMax = new Vector2(0.88f, 0.15f);
+            startRect.anchorMin = new Vector2(0.30f, 0.06f);
+            startRect.anchorMax = new Vector2(0.70f, 0.15f);
             startRect.offsetMin = Vector2.zero;
             startRect.offsetMax = Vector2.zero;
 
@@ -150,8 +152,8 @@ namespace Arena.UI
                 Theme.Muted,
                 () => { Hide(); onConfigure?.Invoke(skills); });
             var configRect = (RectTransform)configBtn.transform;
-            configRect.anchorMin = new Vector2(0.12f, 0.06f);
-            configRect.anchorMax = new Vector2(0.48f, 0.15f);
+            configRect.anchorMin = new Vector2(0.30f, 0.01f);
+            configRect.anchorMax = new Vector2(0.70f, 0.055f);
             configRect.offsetMin = Vector2.zero;
             configRect.offsetMax = Vector2.zero;
         }
@@ -163,34 +165,20 @@ namespace Arena.UI
             var bg = go.AddComponent<Image>();
             bg.color = new Color(accent.r, accent.g, accent.b, 0.18f);
 
-            // Иконка навыка сверху
-            var iconGo = new GameObject("Icon", typeof(RectTransform));
-            iconGo.transform.SetParent(go.transform, false);
-            var iconRect = (RectTransform)iconGo.transform;
-            iconRect.anchorMin = new Vector2(0.35f, 0.52f);
-            iconRect.anchorMax = new Vector2(0.65f, 0.94f);
-            iconRect.offsetMin = Vector2.zero;
-            iconRect.offsetMax = Vector2.zero;
-            var iconImage = iconGo.AddComponent<Image>();
-            var sprite = Theme.TryLoadSprite($"Icons/skill_{skillId}");
-            if (sprite != null)
-            {
-                iconImage.sprite = sprite;
-                iconImage.color = Color.white;
-                iconImage.preserveAspect = true;
-            }
-            else
-            {
-                iconImage.color = accent;
-            }
+            // Иконка навыка слева, название и уровень справа от неё; вся связка — по центру чипа.
+            var chipLayout = go.AddComponent<HorizontalLayoutGroup>();
+            chipLayout.padding = new RectOffset(16, 16, 6, 6);
+            chipLayout.spacing = 20;
+            chipLayout.childAlignment = TextAnchor.MiddleCenter;
+            chipLayout.childForceExpandWidth = false;
+            chipLayout.childForceExpandHeight = false;
+            chipLayout.childControlWidth = true;
+            chipLayout.childControlHeight = true;
 
-            var txt = Theme.CreateText(go.transform, "Label", 22, TextAnchor.UpperCenter, accent);
+            Theme.CreateSkillIcon(go.transform, skillId, 128f);
+
+            var txt = Theme.CreateText(go.transform, "Label", 22, TextAnchor.MiddleLeft, accent);
             txt.text = $"{label}\n{level}";
-            var txtRect = txt.rectTransform;
-            txtRect.anchorMin = new Vector2(0f, 0.04f);
-            txtRect.anchorMax = new Vector2(1f, 0.52f);
-            txtRect.offsetMin = Vector2.zero;
-            txtRect.offsetMax = Vector2.zero;
         }
     }
 }

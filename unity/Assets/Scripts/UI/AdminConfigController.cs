@@ -18,7 +18,7 @@ namespace Arena.UI
     {
         private const int DifficultyMax = 3;
         private const float FieldStep = 0.16f;
-        private const float FieldTop = 0.77f;
+        private const float FieldTop = 0.8f;
 
         private static readonly string[] SkillIds = { "napor", "empatiya", "logika" };
         private static readonly string[] SkillLabels = { "Напор", "Эмпатия", "Логика" };
@@ -60,16 +60,6 @@ namespace Arena.UI
             selectedDifficulty = library[0].meta.difficulty;
 
             BuildUiIfNeeded();
-            var logoGo = new GameObject("Logo", typeof(RectTransform));
-            logoGo.transform.SetParent(root, false);
-            var logoRect = (RectTransform)logoGo.transform;
-            logoRect.anchorMin = new Vector2(0.38f, 0.32f);
-            logoRect.anchorMax = new Vector2(0.62f, 0.68f);
-            logoRect.offsetMin = Vector2.zero;
-            logoRect.offsetMax = Vector2.zero;
-            var logoImage = logoGo.AddComponent<UnityEngine.UI.Image>();
-            logoImage.sprite = Theme.TryLoadSprite("Icons/arena_white");
-            logoImage.preserveAspect = true;
             RebuildToneChips();
             root.gameObject.SetActive(true);
             if (showSkillEditor) UpdateSkillButtonsVisual();
@@ -87,17 +77,22 @@ namespace Arena.UI
             if (root != null) return;
 
             root = Theme.CreateCanvas(transform, "AdminConfigCanvas");
-            Theme.SetCanvasBackground(root, "Background/admin");
-            var fullBackdrop = Theme.CreatePanel(root, "FullBackdrop", new Color(Theme.Navy.r, Theme.Navy.g, Theme.Navy.b, 0.25f));
-            var adminPanel = Theme.CreatePanel(root, "AdminPanel", new Color(Theme.Navy.r, Theme.Navy.g, Theme.Navy.b, 0.25f));
-            adminPanel.anchorMin = new Vector2(0.0f, 0.0f);
-            adminPanel.anchorMax = new Vector2(1f, 1f);
-            adminPanel.offsetMin = Vector2.zero;
-            adminPanel.offsetMax = Vector2.zero;
-            Theme.StretchFull(fullBackdrop);
-            
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 28, TextAnchor.MiddleLeft, Theme.Teal);
+            // Resources/Backgrounds/config.png — тёмная сцена с лучом света над пустым
+            // переговорным столом. Полупрозрачная: Navy-подложка затемняет картинку
+            // наполовину (по замеру контраст светлого текста на 99% площади не ниже
+            // ~5:1, только в самом ядре луча — ниже), чтобы подписи, чипы и иконки
+            // навыков читались, а сцена оставалась видимой. Экран общий — и для
+            // администратора ("Настройка кейса"), и для игрока после теста.
+            Theme.SetCanvasBackground(root, "Backgrounds/config", scrimAlpha: 0.5f);
+
+            // Логотип по центру, в свободной полосе между строкой навыков и нижней
+            // панелью сценария: слева тут только чипы сферы/тона/сложности (заканчиваются
+            // примерно на 0.4 ширины), справа — переключатель режима (от 0.73), так что
+            // по горизонтали логотип им не мешает. По вертикали ниже строки сферы.
+            Theme.CreateLogo(root, new Vector2(0.375f, 0.255f), new Vector2(0.625f, 0.625f));
+
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleLeft, Theme.Teal);
             eyebrow.text = showSkillEditor ? "АДМИНИСТРАТОР — НАСТРОЙКА КЕЙСА" : "НАСТРОЙКА СЦЕНАРИЯ";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.06f, 0.9f);
@@ -116,7 +111,10 @@ namespace Arena.UI
             BuildChipRow("Сфера", DistinctInOrder(library.Select(s => s.meta.sphere)), y, sphereChips, v =>
             {
                 selectedSphere = v;
-            
+                // Тон принадлежит конкретной теме, а не сфере в целом (например,
+                // "уклончивый" есть только у сюжета HR "Контроль договорённостей") —
+                // при смене сферы подсветка тона иначе осталась бы на значении,
+                // которого для новой сферы вообще не существует.
                 if (!library.Any(s => s.meta.sphere == selectedSphere && s.meta.tone == selectedTone))
                 {
                     var firstToneForSphere = library.FirstOrDefault(s => s.meta.sphere == selectedSphere)?.meta.tone;
@@ -137,12 +135,15 @@ namespace Arena.UI
             // не создаются здесь — только контейнер и подпись; набор тонов зависит от
             // selectedSphere и пересобирается в RebuildToneChips (вызывается из Show()
             // и при смене сферы), а не строится один раз на весь список тонов сразу.
-            BuildFieldLabel("ТОН СОБЕСЕДНИКА", y);
+            // Подпись поднята на 0.04 над обычным местом: строка тона выше остальных
+            // (0.1 вместо 0.06), и стандартная подпись (y+0.065..0.11) наезжала на
+            // верх самих чипов.
+            BuildFieldLabel("ТОН СОБЕСЕДНИКА", y + 0.04f);
             var toneRowGo = new GameObject("ТонСобеседникаRow", typeof(RectTransform));
             toneRowGo.transform.SetParent(root, false);
             toneRow = (RectTransform)toneRowGo.transform;
-            toneRow.anchorMin = new Vector2(0.06f, y + 0.06f);
-            toneRow.anchorMax = new Vector2(0.94f, y + 0.07f);
+            toneRow.anchorMin = new Vector2(0.06f, y);
+            toneRow.anchorMax = new Vector2(0.94f, y + 0.1f);
             toneRow.offsetMin = Vector2.zero;
             toneRow.offsetMax = Vector2.zero;
             var toneLayout = toneRowGo.AddComponent<HorizontalLayoutGroup>();
@@ -152,14 +153,14 @@ namespace Arena.UI
             toneLayout.childControlWidth = true;
             toneLayout.childControlHeight = true;
             toneLayout.childAlignment = TextAnchor.MiddleLeft;
-            var previewStrip = Theme.CreatePanel(root, "PreviewStrip", new Color(1f, 1f, 1f, 0.12f));
 
+            var previewStrip = Theme.CreatePanel(root, "PreviewStrip", new Color(Theme.Teal.r, Theme.Teal.g, Theme.Teal.b, 0.14f));
             previewStrip.anchorMin = new Vector2(0.06f, 0.06f);
             previewStrip.anchorMax = new Vector2(0.94f, 0.22f);
             previewStrip.offsetMin = Vector2.zero;
             previewStrip.offsetMax = Vector2.zero;
 
-            scenarioPreviewText = Theme.CreateText(previewStrip, "ScenarioText", 22, TextAnchor.UpperLeft, Theme.Parchment);
+            scenarioPreviewText = Theme.CreateText(previewStrip, "ScenarioText", 19, TextAnchor.UpperLeft, Theme.Parchment);
             var previewTextRect = scenarioPreviewText.rectTransform;
             previewTextRect.anchorMin = new Vector2(0.03f, 0.52f);
             previewTextRect.anchorMax = new Vector2(0.68f, 0.94f);
@@ -191,7 +192,9 @@ namespace Arena.UI
             var rowGo = new GameObject("SkillsRow", typeof(RectTransform));
             rowGo.transform.SetParent(root, false);
             var row = (RectTransform)rowGo.transform;
-            row.anchorMin = new Vector2(0.06f, y);
+            // Строка навыков выше остальных (0.06): иконка навыка в ней 60 px, а не 30.
+            // Расширяется вниз — над строкой стоит подпись "НАВЫКИ ИГРОКА".
+            row.anchorMin = new Vector2(0.06f, y - 0.03f);
             row.anchorMax = new Vector2(0.94f, y + 0.06f);
             row.offsetMin = Vector2.zero;
             row.offsetMax = Vector2.zero;
@@ -211,31 +214,16 @@ namespace Arena.UI
                 groupLayout.spacing = 6;
                 groupLayout.childAlignment = TextAnchor.MiddleLeft;
                 groupLayout.childForceExpandWidth = false;
-                groupLayout.childForceExpandHeight = true;
+                // Без растягивания по высоте: строка стала выше кнопок уровней (они иначе
+                // превратились бы в высокие прямоугольники) — все элементы группы
+                // держатся своей высоты и выравниваются по центру строки.
+                groupLayout.childForceExpandHeight = false;
                 groupLayout.childControlWidth = true;
                 groupLayout.childControlHeight = true;
 
-                var iconGo = new GameObject("Icon", typeof(RectTransform));
-                iconGo.transform.SetParent(groupGo.transform, false);
-                var iconLE = iconGo.AddComponent<LayoutElement>();
-                iconLE.preferredWidth = 50;
-                iconLE.preferredHeight = 50;
-                iconLE.minWidth = 50;
-                iconLE.minHeight = 50;
-                var iconImage = iconGo.AddComponent<Image>();
-                var sprite = Theme.TryLoadSprite($"Icons/skill_{skillId}");
-                if (sprite != null)
-                {
-                    iconImage.sprite = sprite;
-                    iconImage.color = Color.white;
-                    iconImage.preserveAspect = true;
-                }
-                else
-                {
-                    iconImage.color = Theme.ForSkill(skillId);
-                }
+                Theme.CreateSkillIcon(groupGo.transform, skillId, 60f);
 
-                var labelText = Theme.CreateText(groupGo.transform, "Label", 20, TextAnchor.MiddleLeft, Theme.Muted);
+                var labelText = Theme.CreateText(groupGo.transform, "Label", 17, TextAnchor.MiddleLeft, Theme.Muted);
                 labelText.text = SkillLabels[s];
                 labelText.gameObject.AddComponent<LayoutElement>().minWidth = 92;
 
@@ -246,12 +234,15 @@ namespace Arena.UI
                     string capturedSkillId = skillId;
                     var btnGo = new GameObject($"{skillId}_{level}", typeof(RectTransform));
                     btnGo.transform.SetParent(groupGo.transform, false);
-                    btnGo.AddComponent<LayoutElement>().minWidth = 38;
+                    var btnLayout = btnGo.AddComponent<LayoutElement>();
+                    btnLayout.minWidth = 38;
+                    btnLayout.minHeight = 38;
+                    btnLayout.preferredHeight = 38;
                     var bg = btnGo.AddComponent<Image>();
                     var button = btnGo.AddComponent<Button>();
                     button.targetGraphic = bg;
                     button.onClick.AddListener(() => SetSkillLevel(capturedSkillId, capturedLevel));
-                    var txt = Theme.CreateText(btnGo.transform, "Label", 18, TextAnchor.MiddleCenter, Theme.Parchment);
+                    var txt = Theme.CreateText(btnGo.transform, "Label", 16, TextAnchor.MiddleCenter, Theme.Parchment);
                     txt.text = level.ToString();
                     Theme.StretchFull(txt.rectTransform);
                     buttons.Add((level, bg, txt));
@@ -280,7 +271,7 @@ namespace Arena.UI
                 foreach (var (level, bg, txt) in skillButtons[skillId])
                 {
                     bool selected = level == current;
-                    bg.color = selected ? accent : new Color(1f, 1f, 1f, 0.12f);
+                    bg.color = selected ? accent : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.08f);
                     txt.color = selected ? Theme.Navy : Theme.Parchment;
                 }
             }
@@ -288,11 +279,11 @@ namespace Arena.UI
 
         private void BuildFieldLabel(string label, float y, float anchorMinX = 0.06f, float anchorMaxX = 0.7f)
         {
-            var labelText = Theme.CreateText(root, $"{label}Label", 18, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
+            var labelText = Theme.CreateText(root, $"{label}Label", 16, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
             labelText.text = label;
             var labelRect = labelText.rectTransform;
-            labelRect.anchorMin = new Vector2(anchorMinX, y + 0.075f);
-            labelRect.anchorMax = new Vector2(anchorMaxX, y + 0.16f);
+            labelRect.anchorMin = new Vector2(anchorMinX, y + 0.065f);
+            labelRect.anchorMax = new Vector2(anchorMaxX, y + 0.11f);
             labelRect.offsetMin = Vector2.zero;
             labelRect.offsetMax = Vector2.zero;
         }
@@ -311,8 +302,8 @@ namespace Arena.UI
             var rowGo = new GameObject("GameModeRow", typeof(RectTransform));
             rowGo.transform.SetParent(root, false);
             var row = (RectTransform)rowGo.transform;
-            row.anchorMin = new Vector2(0.73f, y + 0.03f);
-            row.anchorMax = new Vector2(0.94f, y + 0.06f + 0.03f);
+            row.anchorMin = new Vector2(0.73f, y);
+            row.anchorMax = new Vector2(0.94f, y + 0.06f);
             row.offsetMin = Vector2.zero;
             row.offsetMax = Vector2.zero;
             var layout = rowGo.AddComponent<HorizontalLayoutGroup>();
@@ -338,7 +329,7 @@ namespace Arena.UI
                 selectedGameMode = mode;
                 UpdateGameModeButtonsVisual();
             });
-            var text = Theme.CreateText(go.transform, "Label", 17, TextAnchor.MiddleCenter, Theme.Parchment);
+            var text = Theme.CreateText(go.transform, "Label", 15, TextAnchor.MiddleCenter, Theme.Parchment);
             text.text = label;
             Theme.StretchFull(text.rectTransform);
             gameModeButtons.Add((mode, bg, text));
@@ -349,7 +340,7 @@ namespace Arena.UI
             foreach (var (mode, bg, txt) in gameModeButtons)
             {
                 bool selected = mode == selectedGameMode;
-                bg.color = selected ? Theme.Amber : new Color(1f, 1f, 1f, 0.12f);
+                bg.color = selected ? Theme.Amber : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.08f);
                 txt.color = selected ? Theme.Navy : Theme.Parchment;
             }
         }
@@ -361,8 +352,8 @@ namespace Arena.UI
             var rowGo = new GameObject($"{label}Row", typeof(RectTransform));
             rowGo.transform.SetParent(root, false);
             var row = (RectTransform)rowGo.transform;
-            row.anchorMin = new Vector2(0.06f, y + 0.03f);
-            row.anchorMax = new Vector2(0.94f, y + 0.03f + rowHeight);
+            row.anchorMin = new Vector2(0.06f, y);
+            row.anchorMax = new Vector2(0.94f, y + rowHeight);
             row.offsetMin = Vector2.zero;
             row.offsetMax = Vector2.zero;
             var layout = rowGo.AddComponent<HorizontalLayoutGroup>();
@@ -419,8 +410,8 @@ namespace Arena.UI
             var rowGo = new GameObject("DifficultyRow", typeof(RectTransform));
             rowGo.transform.SetParent(root, false);
             var difficultyRow = (RectTransform)rowGo.transform;
-            difficultyRow.anchorMin = new Vector2(0.06f, y + 0.03f);
-            difficultyRow.anchorMax = new Vector2(0.4f, y + 0.06f + 0.03f);
+            difficultyRow.anchorMin = new Vector2(0.06f, y);
+            difficultyRow.anchorMax = new Vector2(0.4f, y + 0.06f);
             difficultyRow.offsetMin = Vector2.zero;
             difficultyRow.offsetMax = Vector2.zero;
             var layout = rowGo.AddComponent<HorizontalLayoutGroup>();
@@ -449,6 +440,17 @@ namespace Arena.UI
                 });
                 difficultyDots.Add(dotImage);
             }
+
+            // "N из 3" — прямо за квадратиками, в той же строке (раньше стояло отдельной
+            // подписью с якорем 0.42 ширины — далеко от квадратиков и ровно там, где
+            // теперь логотип).
+            var gapGo = new GameObject("Gap", typeof(RectTransform));
+            gapGo.transform.SetParent(difficultyRow, false);
+            gapGo.AddComponent<LayoutElement>().minWidth = 10;
+
+            var difficultyLabel = Theme.CreateText(difficultyRow, "DifficultyValue", 17, TextAnchor.MiddleLeft, Theme.Muted);
+            difficultyLabel.name = "DifficultyValueText";
+            difficultyValueText = difficultyLabel;
         }
 
         private void UpdatePreview()
@@ -458,14 +460,14 @@ namespace Arena.UI
             for (int i = 0; i < difficultyDots.Count; i++)
                 difficultyDots[i].color = (i + 1) <= selectedDifficulty
                     ? Theme.Amber
-                    : new Color(1f, 1f, 1f, 0.12f);
+                    : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.14f);
             if (difficultyValueText != null) difficultyValueText.text = $"{selectedDifficulty} из {DifficultyMax}";
 
             previewScenario = ScenarioLibrary.Pick(library, selectedSphere, selectedDifficulty, selectedTone);
             if (previewScenario == null) return;
 
             scenarioPreviewText.text = $"{previewScenario.meta.sphere} — {previewScenario.meta.topic}";
-            rolePreviewText.text = Theme.Capitalize(previewScenario.meta.opponentRole);
+            rolePreviewText.text = previewScenario.meta.opponentRole;
         }
 
         private void OnStartClicked()

@@ -14,8 +14,12 @@ namespace Arena.Dialogue
     // Гипотеза Ю7-вариант-А (docs/feature-hypotheses.md): видимая реакция оппонента
     // на последнюю реплику игрока — без LLM и без новых полей в JSON сценариев,
     // чисто по знаку/силе points только что выбранной опции.
+    // Neutral — только самое начало разговора, пока игрок ещё не сделал ход и
+    // реакции нет; дальше всегда одно из четырёх остальных. Calm — не "старт", а
+    // сдержанная реакция на обычный ход (+1 или 0).
     public enum OpponentMood
     {
+        Neutral,
         Calm,
         Pleased,
         Wary,
@@ -101,10 +105,10 @@ namespace Arena.Dialogue
         }
 
         // Реакция на только что сделанный ход игрока — по баллу последней выбранной
-        // опции. До первого хода (или на входе, до выбора) оппонент нейтрален.
+        // опции. До первого хода (на входе, до выбора) оппонент нейтрален.
         public OpponentMood GetOpponentMood()
         {
-            if (Transcript.Count == 0) return OpponentMood.Calm;
+            if (Transcript.Count == 0) return OpponentMood.Neutral;
 
             int lastPoints = Transcript[Transcript.Count - 1].ChosenOption.points;
             if (lastPoints >= 2) return OpponentMood.Pleased;
