@@ -159,18 +159,23 @@ namespace Arena.UI
                 var iconGo = new GameObject("Icon", typeof(RectTransform));
                 iconGo.transform.SetParent(buttonRect, false);
                 var iconRect = (RectTransform)iconGo.transform;
-                iconRect.anchorMin = new Vector2(0.08f, 0.08f);
-                iconRect.anchorMax = new Vector2(0.92f, 0.92f);
+                iconRect.anchorMin = new Vector2(0.16f, 0.16f);
+                iconRect.anchorMax = new Vector2(0.84f, 0.84f);
                 iconRect.offsetMin = Vector2.zero;
                 iconRect.offsetMax = Vector2.zero;
                 var iconImage = iconGo.AddComponent<Image>();
                 iconImage.sprite = icon;
                 iconImage.color = accent;
+                iconImage.preserveAspect = true;
             }
             else if (!string.IsNullOrEmpty(textLabel))
             {
-                var label = CreateText(buttonRect, "Label", 34, TextAnchor.MiddleCenter, accent);
-                StretchFull(label.rectTransform);
+                var label = CreateText(buttonRect, "Label", 26, TextAnchor.MiddleCenter, accent);
+                var labelRect = label.rectTransform;
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = new Vector2(0f, 2f);
+                labelRect.offsetMax = new Vector2(0f, 2f);
                 label.text = textLabel;
             }
         }
