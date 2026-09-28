@@ -141,7 +141,11 @@ namespace Arena.UI
             const float rightEdge = -12f;
             const float topEdge = -12f;
 
-            CreateCornerButton(overlayRoot, "QuitButton", new Vector2(rightEdge, topEdge), size, Color.white, TryLoadSprite("Icons/icon_close"), null, QuitGame);
+            // В браузере выход не работает — страница не может закрыть сама себя, — поэтому
+            // крестик там не создаётся: нерабочая кнопка только сбивает с толку и к тому же
+            // ложилась поверх кнопки «на весь экран» шаблона страницы. Кнопка «в меню» остаётся.
+            if (Application.platform != RuntimePlatform.WebGLPlayer)
+                CreateCornerButton(overlayRoot, "QuitButton", new Vector2(rightEdge, topEdge), size, Color.white, TryLoadSprite("Icons/icon_close"), null, QuitGame);
 
             if (showMenuButton)
                 CreateCornerButton(overlayRoot, "MenuButton", new Vector2(rightEdge - size - gap, topEdge), size, Teal, TryLoadSprite("Icons/icon_home"), null, () => OnRequestMainMenu?.Invoke());
@@ -192,9 +196,11 @@ namespace Arena.UI
         public static void QuitGame()
         {
             #if UNITY_EDITOR
-                            UnityEditor.EditorApplication.isPlaying = false;
+            UnityEditor.EditorApplication.isPlaying = false;
             #elif UNITY_WEBGL
-                Debug.Log("[WebGL] X pressed — closing is browser-restricted.");
+            Debug.Log("[WebGL] X pressed — closing is browser-restricted.");
+            #else
+            Application.Quit();
             #endif
         }
 
@@ -439,7 +445,11 @@ namespace Arena.UI
             scrollRect.horizontal = false;
             scrollRect.vertical = true;
             scrollRect.movementType = ScrollRect.MovementType.Clamped;
-            scrollRect.scrollSensitivity = 24f;
+            // При 24 один щелчок колеса в браузере сдвигал список примерно на треть строки:
+            // под самым длинным вариантом ответа (~2 500 символов) остальные варианты
+            // открывались только после ~70 щелчков, и казалось, что ответ всего один.
+            // 120 — около 140 px (≈4 строки) на щелчок в WebGL, как обычная прокрутка страницы.
+            scrollRect.scrollSensitivity = 120f;
             scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
             scrollRect.verticalScrollbarSpacing = ScrollbarGap;
 

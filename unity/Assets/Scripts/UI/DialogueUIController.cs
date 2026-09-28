@@ -489,7 +489,7 @@ namespace Arena.UI
                     break;
                 case OpponentMood.Wary:
                     color = Theme.Amber;
-                    label = "Удивлена";
+                    label = "Насторожен";
                     moodSuffix = "wary";
                     break;
                 case OpponentMood.Irritated:
