@@ -57,6 +57,11 @@ namespace Arena.UI
                 default: return Parchment;
             }
         }
+        public static string Capitalize(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s;
+            return char.ToUpper(s[0]) + s.Substring(1);
+        }
 
         private static Color Hex(string hex)
         {
@@ -122,50 +127,43 @@ namespace Arena.UI
             var background = CreatePanel(root, "Background", Navy);
             StretchFull(background);
 
-            // В WebGL Application.Quit ничего не делает — браузер не даёт странице
-            // закрыть саму себя — поэтому кнопка выхода там не создаётся вообще, а
-            // не показывается нерабочей. Кнопка меню технически безвредна и там
-            // (просто переключает экраны), но раз выхода всё равно нет, вторая
-            // кнопка в стопке без первой выглядела бы странно — отключаем обе разом.
-            if (Application.platform != RuntimePlatform.WebGLPlayer)
-            {
-                // Экран выбора режима — сам и есть главное меню, кнопка "туда же"
-                // на нём самом не нужна (showMenuButton=false у ModeSelectController).
-                CreateCornerButton(root, "QuitButton", 8, Coral, null, "X", QuitGame);
-                if (showMenuButton)
-                    CreateCornerButton(root, "MenuButton", 8 + 28 + 6, Teal, TryLoadSprite("Icons/icon_home"), null, () => OnRequestMainMenu?.Invoke());
-            }
+            var overlayGo = new GameObject("CornerOverlay");
+            overlayGo.transform.SetParent(canvasGo.transform, false);
+            var overlayCanvas = overlayGo.AddComponent<Canvas>();
+            overlayCanvas.overrideSorting = true;
+            overlayCanvas.sortingOrder = 100;
+            overlayGo.AddComponent<GraphicRaycaster>();
+            var overlayRoot = (RectTransform)overlayGo.transform;
+            StretchFull(overlayRoot);
+
+            const float size = 40f;
+            const float gap = 12f;
+            const float rightEdge = -12f;
+            const float topEdge = -12f;
+
+            CreateCornerButton(overlayRoot, "QuitButton", new Vector2(rightEdge, topEdge), size, Color.white, TryLoadSprite("Icons/icon_close"), null, QuitGame);
+
+            if (showMenuButton)
+                CreateCornerButton(overlayRoot, "MenuButton", new Vector2(rightEdge - size - gap, topEdge), size, Teal, TryLoadSprite("Icons/icon_home"), null, () => OnRequestMainMenu?.Invoke());
 
             return root;
         }
 
-        // Общий билдер маленькой квадратной кнопки в правом верхнем углу — общий
-        // для выхода и возврата в меню, чтобы не дублировать вёрстку дважды.
-        // yOffsetFromTop растёт по мере добавления новых кнопок в стопку вниз.
-        //
-        // Компактный размер (28x28) и минимальный отступ — почти на всех экранах
-        // у самого верхнего правого края уже что-то есть (пипсы навыков в диалоге
-        // до x=0.95, счётчик вопроса в тесте навыков и "← Назад" в теории до
-        // x=0.94/y=0.97) — проверено, что эта колонка кнопок (правее x≈0.97) их
-        // не перекрывает. Текстовая подпись — только ASCII (кнопка выхода — "X",
-        // не "×"): кастомный TMP-шрифт проекта собран лишь из Basic Latin +
-        // кириллицы (см. TmpFontBuilder.cs, урок К1), символа умножения в нём
-        // может не быть — поэтому для кнопки меню вместо буквы используется
-        // отдельная иконка-домик (Resources/Icons/icon_home.png).
-        private static void CreateCornerButton(RectTransform canvasRoot, string name, float yOffsetFromTop, Color accent, Sprite icon, string textLabel, UnityEngine.Events.UnityAction onClick)
+        private static void CreateCornerButton(RectTransform canvasRoot, string name, Vector2 anchoredPos, float size, Color accent, Sprite icon, string textLabel, UnityEngine.Events.UnityAction onClick)
         {
-            var buttonRect = CreatePanel(canvasRoot, name, new Color(accent.r, accent.g, accent.b, 0.85f));
+            var buttonRect = CreatePanel(canvasRoot, name, new Color(0f, 0f, 0f, 0f));
             buttonRect.anchorMin = new Vector2(1f, 1f);
             buttonRect.anchorMax = new Vector2(1f, 1f);
             buttonRect.pivot = new Vector2(1f, 1f);
-            buttonRect.sizeDelta = new Vector2(28, 28);
-            buttonRect.anchoredPosition = new Vector2(-8, -yOffsetFromTop);
+            buttonRect.sizeDelta = new Vector2(size, size);
+            buttonRect.anchoredPosition = anchoredPos;
 
             var button = buttonRect.gameObject.AddComponent<Button>();
             button.targetGraphic = buttonRect.GetComponent<Image>();
             var colors = button.colors;
-            colors.highlightedColor = new Color(1f, 1f, 1f, 0.92f);
-            colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 1f, 1f, 0.7f);
+            colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 0.85f);
             button.colors = colors;
             button.onClick.AddListener(onClick);
 
@@ -174,17 +172,18 @@ namespace Arena.UI
                 var iconGo = new GameObject("Icon", typeof(RectTransform));
                 iconGo.transform.SetParent(buttonRect, false);
                 var iconRect = (RectTransform)iconGo.transform;
-                iconRect.anchorMin = new Vector2(0.15f, 0.15f);
-                iconRect.anchorMax = new Vector2(0.85f, 0.85f);
+                iconRect.anchorMin = new Vector2(0.16f, 0.16f);
+                iconRect.anchorMax = new Vector2(0.84f, 0.84f);
                 iconRect.offsetMin = Vector2.zero;
                 iconRect.offsetMax = Vector2.zero;
                 var iconImage = iconGo.AddComponent<Image>();
                 iconImage.sprite = icon;
-                iconImage.color = Color.white;
+                iconImage.color = accent;
+                iconImage.preserveAspect = true;
             }
             else if (!string.IsNullOrEmpty(textLabel))
             {
-                var label = CreateText(buttonRect, "Label", 16, TextAnchor.MiddleCenter, Parchment);
+                var label = CreateText(buttonRect, "Label", 26, TextAnchor.MiddleCenter, accent);
                 StretchFull(label.rectTransform);
                 label.text = textLabel;
             }
@@ -192,11 +191,11 @@ namespace Arena.UI
 
         public static void QuitGame()
         {
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
+            #if UNITY_EDITOR
+                            UnityEditor.EditorApplication.isPlaying = false;
+            #elif UNITY_WEBGL
+                Debug.Log("[WebGL] X pressed — closing is browser-restricted.");
+            #endif
         }
 
         public static RectTransform CreatePanel(Transform parent, string name, Color color)
@@ -269,7 +268,7 @@ namespace Arena.UI
 
             var layoutElement = go.AddComponent<LayoutElement>();
             layoutElement.minHeight = 48;
-            layoutElement.minWidth = 135;
+            layoutElement.minWidth = 260;
 
             text = CreateText(go.transform, "Label", 20, TextAnchor.MiddleCenter, Parchment);
             var textRect = text.rectTransform;
@@ -304,14 +303,6 @@ namespace Arena.UI
             image.raycastTarget = false;
             return rect;
         }
-
-        // Иконка навыка (Resources/Icons/skill_<napor|empatiya|logika>.png) для строк
-        // с лэйаут-группой. Возвращает "держатель" фиксированного предпочтительного
-        // размера — группа с childForceExpandHeight растягивает его по высоте строки,
-        // поэтому сама иконка лежит в нём квадратом size x size по центру и не
-        // вытягивается. Иконка сидит на светлой плашке: часть арта тёмная ("Логика" —
-        // тёмно-синие весы) и без подложки теряется на тёмном фоне игры. Если файла
-        // ещё нет — вместо иконки цветной квадрат акцента навыка (как пипсы).
         public static RectTransform CreateSkillIcon(Transform parent, string skillId, float size)
         {
             var holderGo = new GameObject($"SkillIcon_{skillId}", typeof(RectTransform));
@@ -322,44 +313,25 @@ namespace Arena.UI
             holderLayout.minHeight = size;
             holderLayout.preferredHeight = size;
 
-            var plateRect = CreatePanel(holderGo.transform, "Plate", ForSkill(skillId));
-            plateRect.anchorMin = new Vector2(0.5f, 0.5f);
-            plateRect.anchorMax = new Vector2(0.5f, 0.5f);
-            plateRect.pivot = new Vector2(0.5f, 0.5f);
-            plateRect.anchoredPosition = Vector2.zero;
-            plateRect.sizeDelta = new Vector2(size, size);
-            var plate = plateRect.GetComponent<Image>();
-            plate.raycastTarget = false;
-
             var sprite = TryLoadSprite($"Icons/skill_{skillId}");
-            if (sprite == null) return (RectTransform)holderGo.transform;
+            if (sprite == null)
+            {
+                var plate = CreatePanel(holderGo.transform, "Plate", ForSkill(skillId));
+                StretchFull(plate);
+                plate.GetComponent<Image>().raycastTarget = false;
+                return (RectTransform)holderGo.transform;
+            }
 
-            plate.color = new Color(Parchment.r, Parchment.g, Parchment.b, 0.92f);
             var glyphGo = new GameObject("Glyph", typeof(RectTransform));
-            glyphGo.transform.SetParent(plateRect, false);
+            glyphGo.transform.SetParent(holderGo.transform, false);
             var glyphRect = (RectTransform)glyphGo.transform;
             StretchFull(glyphRect);
-            var inset = Mathf.Max(2f, size * 0.1f);
-            glyphRect.offsetMin = new Vector2(inset, inset);
-            glyphRect.offsetMax = new Vector2(-inset, -inset);
             var glyph = glyphGo.AddComponent<Image>();
             glyph.sprite = sprite;
             glyph.preserveAspect = true;
             glyph.raycastTarget = false;
             return (RectTransform)holderGo.transform;
         }
-
-        // Ищет дочернюю панель "Background" (её создаёт CreateCanvas) и либо ставит
-        // на неё реальный фон, либо возвращает к сплошному Navy, если ассета нет —
-        // безопасно вызывать повторно (например, при смене сценария).
-        //
-        // Настоящий фон масштабируется по принципу "cover" (AspectRatioFitter в режиме
-        // EnvelopeParent): заполняет экран целиком без искажения при любом соотношении
-        // сторон окна, лишнее по краям просто уходит за экран. Референс канваса 16:10,
-        // а арт может быть 16:9 (сейчас 1672x941) — простое растягивание исказило бы
-        // картинку. scrimAlpha — затемняющая подложка цвета Navy поверх картинки: весь
-        // текст интерфейса светлый и рисуется прямо на фоне, а на ярких кадрах (небо,
-        // экран презентации) без затемнения контраст падал до ~1.2:1.
         public static void SetCanvasBackground(RectTransform canvasRoot, string resourcePath, float scrimAlpha = 0f)
         {
             var backgroundTransform = canvasRoot.Find("Background");
@@ -426,19 +398,19 @@ namespace Arena.UI
             accentBar.offsetMin = Vector2.zero;
             accentBar.offsetMax = Vector2.zero;
 
-            var titleText = CreateText(card, "Title", 24, TextAnchor.UpperLeft, Parchment);
+            var titleText = CreateText(card, "Title", 32, TextAnchor.UpperLeft, Parchment);
             titleText.text = title;
             var titleRect = titleText.rectTransform;
-            titleRect.anchorMin = new Vector2(0.08f, 0.7f);
+            titleRect.anchorMin = new Vector2(0.08f, 0.62f);
             titleRect.anchorMax = new Vector2(0.92f, 0.9f);
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            var subtitleText = CreateText(card, "Subtitle", 19, TextAnchor.UpperLeft, Muted);
+            var subtitleText = CreateText(card, "Subtitle", 22, TextAnchor.UpperLeft, Muted);
             subtitleText.text = subtitle;
             var subtitleRect = subtitleText.rectTransform;
-            subtitleRect.anchorMin = new Vector2(0.08f, 0.1f);
-            subtitleRect.anchorMax = new Vector2(0.92f, 0.62f);
+            subtitleRect.anchorMin = new Vector2(0.08f, 0.06f);
+            subtitleRect.anchorMax = new Vector2(0.92f, 0.54f);
             subtitleRect.offsetMin = Vector2.zero;
             subtitleRect.offsetMax = Vector2.zero;
 

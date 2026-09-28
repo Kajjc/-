@@ -37,7 +37,7 @@ namespace Arena.UI
 
             root = Theme.CreateCanvas(transform, "TheoryCanvas");
 
-            var eyebrow = Theme.CreateText(root, "Eyebrow", 20, TextAnchor.MiddleLeft, Theme.Teal);
+            var eyebrow = Theme.CreateText(root, "Eyebrow", 28, TextAnchor.MiddleLeft, Theme.Teal);
             eyebrow.text = "ТЕОРИЯ И ТЕХНИКИ";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0.06f, 0.9f);
@@ -45,10 +45,16 @@ namespace Arena.UI
             eyebrowRect.offsetMin = Vector2.zero;
             eyebrowRect.offsetMax = Vector2.zero;
 
+            var listRoot = Theme.CreateScrollList(root, "List", out content);
+            listRoot.anchorMin = new Vector2(0.06f, 0.14f);
+            listRoot.anchorMax = new Vector2(0.94f, 0.86f);
+            listRoot.offsetMin = Vector2.zero;
+            listRoot.offsetMax = Vector2.zero;
+
             var backButton = Theme.CreateButton(
                 root, "← Назад",
-                new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.08f),
-                Theme.Parchment,
+                Theme.Amber,
+                Theme.Navy,
                 () =>
                 {
                     Hide();
@@ -56,16 +62,10 @@ namespace Arena.UI
                 });
             backButton.GetComponentInChildren<TMP_Text>().alignment = TextAlignmentOptions.Center;
             var backRect = (RectTransform)backButton.transform;
-            backRect.anchorMin = new Vector2(0.78f, 0.9f);
-            backRect.anchorMax = new Vector2(0.94f, 0.97f);
+            backRect.anchorMin = new Vector2(0.72f, 0.04f);
+            backRect.anchorMax = new Vector2(0.94f, 0.12f);
             backRect.offsetMin = Vector2.zero;
             backRect.offsetMax = Vector2.zero;
-
-            var listRoot = Theme.CreateScrollList(root, "List", out content);
-            listRoot.anchorMin = new Vector2(0.06f, 0.05f);
-            listRoot.anchorMax = new Vector2(0.94f, 0.86f);
-            listRoot.offsetMin = Vector2.zero;
-            listRoot.offsetMax = Vector2.zero;
         }
 
         private void Populate(HashSet<string> encountered)

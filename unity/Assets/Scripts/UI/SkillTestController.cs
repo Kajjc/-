@@ -10,8 +10,6 @@ namespace Arena.UI
     // в перемешанном порядке, 3-балльная шкала, на выходе — PlayerSkills.
     // Кнопка «Пропустить тест» ведёт сразу к настройке сценария с дефолтными
     // навыками — на случай, если пользователь передумал проходить тест.
-    // Возврат в главное меню обеспечивает глобальная кнопка «домой»
-    // (Theme.CreateCanvas → OnRequestMainMenu), отдельная кнопка не нужна.
     public class SkillTestController : MonoBehaviour
     {
         private RectTransform root;
@@ -28,9 +26,6 @@ namespace Arena.UI
 
         public GameObject Root => root != null ? root.gameObject : null;
 
-        // onSkip опционален: если не передан, кнопка всё равно рисуется, но
-        // ничего не делает. Существующие вызовы Show(onComplete) продолжают
-        // работать без изменений.
         public void Show(Action<PlayerSkills> onComplete, Action onSkip = null)
         {
             this.onComplete = onComplete;
@@ -55,6 +50,10 @@ namespace Arena.UI
             if (root != null) return;
 
             root = Theme.CreateCanvas(transform, "SkillTestCanvas");
+            Theme.SetCanvasBackground(root, "Background/title");
+
+            var backdrop = Theme.CreatePanel(root, "Backdrop", new Color(Theme.Navy.r, Theme.Navy.g, Theme.Navy.b, 0.55f));
+            Theme.StretchFull(backdrop);
 
             var panel = Theme.CreatePanel(root, "Content", new Color(0, 0, 0, 0));
             Theme.StretchFull(panel);
@@ -65,7 +64,7 @@ namespace Arena.UI
             header.offsetMin = Vector2.zero;
             header.offsetMax = Vector2.zero;
 
-            var eyebrow = Theme.CreateText(header, "Eyebrow", 20, TextAnchor.MiddleLeft, Theme.Amber);
+            var eyebrow = Theme.CreateText(header, "Eyebrow", 28, TextAnchor.MiddleLeft, Theme.Amber);
             eyebrow.text = "ТЕСТ НАВЫКОВ";
             var eyebrowRect = eyebrow.rectTransform;
             eyebrowRect.anchorMin = new Vector2(0f, 0f);
@@ -119,16 +118,15 @@ namespace Arena.UI
             layout.childControlWidth = true;
             layout.childControlHeight = true;
 
-            // Кнопка «Пропустить тест» — внизу по центру, неброская.
             var skipBtn = Theme.CreateButton(
                 panel,
                 "Пропустить тест →",
-                new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.06f),
                 Theme.Amber,
+                Theme.Navy,
                 () => { Hide(); onSkip?.Invoke(); });
             var skipRect = (RectTransform)skipBtn.transform;
-            skipRect.anchorMin = new Vector2(0.34f, 0.06f);
-            skipRect.anchorMax = new Vector2(0.66f, 0.13f);
+            skipRect.anchorMin = new Vector2(0.72f, 0.06f);
+            skipRect.anchorMax = new Vector2(0.94f, 0.13f);
             skipRect.offsetMin = Vector2.zero;
             skipRect.offsetMax = Vector2.zero;
         }

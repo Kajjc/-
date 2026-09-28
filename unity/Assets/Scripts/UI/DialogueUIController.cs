@@ -203,8 +203,8 @@ namespace Arena.UI
             var pipsGo = new GameObject("Pips", typeof(RectTransform));
             pipsGo.transform.SetParent(root, false);
             pipsRow = (RectTransform)pipsGo.transform;
-            pipsRow.anchorMin = new Vector2(PipsLeft, 0.86f);
-            pipsRow.anchorMax = new Vector2(0.95f, 0.95f);
+            pipsRow.anchorMin = new Vector2(PipsLeft, 0.80f);
+            pipsRow.anchorMax = new Vector2(0.95f, 0.92f);
             pipsRow.offsetMin = Vector2.zero;
             pipsRow.offsetMax = Vector2.zero;
             var pipsLayout = pipsGo.AddComponent<HorizontalLayoutGroup>();
@@ -228,15 +228,13 @@ namespace Arena.UI
             opponentRect.offsetMax = Vector2.zero;
             opponentTextGroup = opponentText.gameObject.AddComponent<CanvasGroup>();
 
-            var optionsGo = new GameObject("Options", typeof(RectTransform));
-            optionsGo.transform.SetParent(root, false);
-            optionsContainer = (RectTransform)optionsGo.transform;
-            optionsContainer.anchorMin = new Vector2(0.05f, 0.05f);
-            optionsContainer.anchorMax = new Vector2(0.95f, 0.5f);
-            optionsContainer.offsetMin = Vector2.zero;
-            optionsContainer.offsetMax = Vector2.zero;
-            optionsGroup = optionsGo.AddComponent<CanvasGroup>();
-            var layout = optionsGo.AddComponent<VerticalLayoutGroup>();
+            var optionsScroll = Theme.CreateScrollList(root, "OptionsScroll", out optionsContainer);
+            optionsScroll.anchorMin = new Vector2(0.05f, 0.05f);
+            optionsScroll.anchorMax = new Vector2(0.95f, 0.5f);
+            optionsScroll.offsetMin = Vector2.zero;
+            optionsScroll.offsetMax = Vector2.zero;
+            optionsGroup = optionsScroll.gameObject.AddComponent<CanvasGroup>();
+            var layout = optionsContainer.GetComponent<VerticalLayoutGroup>();
             layout.spacing = 10;
             layout.childForceExpandHeight = false;
             layout.childForceExpandWidth = true;
@@ -252,34 +250,21 @@ namespace Arena.UI
             Theme.StretchFull(endPanel);
             endPanel.gameObject.SetActive(false);
 
-            // Значок исхода: Resources/Icons/outcome_<win|compromise|fail>.png (цветной
-            // квадрат акцента исхода, если файла нет — RenderEndScreen). Фиксированный
-            // квадрат, а не доли канваса: раньше плашка была процентной и на нестандартном
-            // окне вытягивалась бы вместе с картинкой. Верхний левый угол — там же, где был
-            // прежний бейдж, заголовок исхода стоит правее.
+        
             outcomeBadge = Theme.CreatePanel(endPanel, "OutcomeBadge", Theme.Amber);
-            outcomeBadge.anchorMin = new Vector2(0.06f, 0.93f);
-            outcomeBadge.anchorMax = new Vector2(0.06f, 0.93f);
+            outcomeBadge.anchorMin = new Vector2(0.06f, 0.94f);
+            outcomeBadge.anchorMax = new Vector2(0.06f, 0.94f);
             outcomeBadge.pivot = new Vector2(0f, 1f);
             outcomeBadge.anchoredPosition = Vector2.zero;
-            outcomeBadge.sizeDelta = new Vector2(OutcomeIconSize, OutcomeIconSize);
+            outcomeBadge.sizeDelta = new Vector2(56f, 56f);
 
             endTitleText = Theme.CreateText(endPanel, "EndTitle", 32, TextAnchor.MiddleLeft, Theme.Parchment);
             var titleRect = endTitleText.rectTransform;
-            titleRect.anchorMin = new Vector2(0.16f, 0.84f);
-            titleRect.anchorMax = new Vector2(0.94f, 0.93f);
+            titleRect.anchorMin = new Vector2(0.14f, 0.85f);
+            titleRect.anchorMax = new Vector2(0.94f, 0.94f);
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            // Единый прокручиваемый блок (описание исхода -> баллы -> сильные
-            // стороны -> над чем поработать) вместо жёстких процентных зон —
-            // гипотеза Ю2 (docs/feature-hypotheses.md), методология —
-            // docs/eval-rubric.md §3.2. Раньше описание исхода (node.summary)
-            // рисовалось в отдельном блоке с фиксированной высотой на глаз —
-            // после углубления сценариев длинные сводки стали переполнять эту
-            // высоту и наезжать на разделы ниже (баллы по техникам и т.д.),
-            // которые сами не сдвигались. Теперь оно — первая строка того же
-            // прокручиваемого списка, высота считается автоматически.
             var scrollRoot = Theme.CreateScrollList(endPanel, "EndScroll", out endContent);
             scrollRoot.anchorMin = new Vector2(0.06f, 0.16f);
             scrollRoot.anchorMax = new Vector2(0.94f, 0.82f);
@@ -341,21 +326,11 @@ namespace Arena.UI
             }
 
             endPanel.gameObject.SetActive(false);
-            opponentRoleText.text = engine.Scenario.meta.opponentRole;
+            opponentRoleText.text = Theme.Capitalize(engine.Scenario.meta.opponentRole);
             if (typeCoroutine != null) StopCoroutine(typeCoroutine);
             typeCoroutine = StartCoroutine(TypeOpponentLine(engine.CurrentNode.opponentLine));
             RenderPips();
             RenderMood();
-
-            // Гипотеза Ю1 (docs/feature-hypotheses.md): одна короткая строка перед
-            // первым выбором, чтобы серые/заблокированные реплики не читались как
-            // баг — исчезает сама после первого хода, лишнего экрана не создаёт.
-            if (engine.Transcript.Count == 0)
-            {
-                var hint = Theme.CreateText(optionsContainer, "Hint", 16, TextAnchor.MiddleLeft, Theme.EyebrowMuted);
-                hint.text = "Серые реплики пока недоступны — рядом с ними указано, какого навыка не хватает.";
-                hint.gameObject.AddComponent<LayoutElement>().minHeight = 26;
-            }
 
             foreach (var option in engine.CurrentNode.options)
             {
@@ -398,6 +373,16 @@ namespace Arena.UI
             var textColor = available ? Theme.Parchment : new Color(Theme.Parchment.r, Theme.Parchment.g, Theme.Parchment.b, 0.62f);
             var label = Theme.CreateText(go.transform, "Label", 22, TextAnchor.MiddleLeft, textColor);
             label.text = $"{number}.  {option.text}";
+            label.text = $"{number}.  {option.text}";
+            label.overflowMode = TextOverflowModes.Truncate;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 15;
+            label.fontSizeMax = 22;
+            label.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
+            label.overflowMode = TextOverflowModes.Truncate;   // ← сообщает layout-системе реальную высоту
+            label.enableAutoSizing = true;                     // ← длинный текст ужимается, а не вылезает
+            label.fontSizeMin = 15;
+            label.fontSizeMax = 22;
             label.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
 
             if (!available)
@@ -504,7 +489,7 @@ namespace Arena.UI
                     break;
                 case OpponentMood.Wary:
                     color = Theme.Amber;
-                    label = "Насторожен";
+                    label = "Удивлена";
                     moodSuffix = "wary";
                     break;
                 case OpponentMood.Irritated:
@@ -515,7 +500,7 @@ namespace Arena.UI
                 default:
                     color = Theme.Teal;
                     label = "Спокоен";
-                    moodSuffix = "calm";
+                    moodSuffix = "neutral";
                     break;
             }
 
@@ -687,7 +672,7 @@ namespace Arena.UI
             AddBadgesSection(newlyEarnedBadges);
 
             AddSectionLabel("БАЛЛЫ ПО ТЕХНИКАМ");
-            AddScoreChipsRow();
+            AddScoreChipsRow(byId);
 
             AddTechniqueTimelineSection();
 
@@ -725,15 +710,29 @@ namespace Arena.UI
         {
             "position_push", "escalate", "personal_attack", "empty_threat", "vague_claim", "give_up"
         };
+        // Какая из трёх шкал навыков (Напор/Эмпатия/Логика) стоит за каждой
+        // техникой. Нужно только для иконки в чипе — баллы и так приходят из движка.
+        // Если техника не в таблице, чип покажется без иконки (не ошибка).
+        private static readonly Dictionary<string, string> SkillForTechnique = new Dictionary<string, string>
+        {
+         // Логика
+            { "objective_criteria", "logika" }, { "open_question", "logika" },
+            { "batna_leverage",     "logika" }, { "recover",      "logika" },
+            // Эмпатия
+            { "state_interest",  "empatiya" }, { "active_listening", "empatiya" },
+            { "de_escalate",     "empatiya" },
+         // Напор
+            { "package_deal",    "napor"    }, { "anchor_with_flex", "napor" },
+            { "position_push",   "napor"    }, { "escalate",         "napor" },
+            { "personal_attack", "napor"    }, { "empty_threat",     "napor" },
+            { "vague_claim",     "napor"    }, { "give_up",          "napor" },
+        };
 
-        // Гипотеза "Профиль переговорщика (архетип)": та же таксономия из 15 техник,
-        // но перегруппирована по стилю поведения на 5 архетипов вместо 2 семей выше
-        // (принципиальные/позиционные — про качество аргументации, архетип — про
-        // манеру вести разговор). Архетип определяется по ЧАСТОТЕ выбора техники, а
-        // не по сумме баллов — так нагляднее для игрока ("5 раз уступил"), и разбиение
-        // на принципиальные/позиционные ещё и не мешает: обе семьи представлены и
-        // среди "хороших" архетипов (Аналитик/Дипломат/Стратег), и Уступчивый с
-        // Агрессором целиком состоят из позиционных техник.
+        private static string TechniqueToSkill(string techniqueId)
+        {
+            return techniqueId != null && SkillForTechnique.TryGetValue(techniqueId, out var s) ? s : null;
+        }
+
         private static readonly Dictionary<string, string> ArchetypeForTechnique = new Dictionary<string, string>
         {
             { "objective_criteria", "Аналитик" }, { "open_question", "Аналитик" },
@@ -928,20 +927,27 @@ namespace Arena.UI
         // Ю7) — если файла нет, просто остаётся цветной квадрат-плейсхолдер.
         private void AddBadgeCard(Transform parent, BadgeDefinition def)
         {
-            var card = Theme.CreatePanel(parent, $"Badge_{def.Id}", new Color(Theme.Amber.r, Theme.Amber.g, Theme.Amber.b, 0.12f));
+            var card = Theme.CreatePanel(parent, $"Badge_{def.Id}",
+                new Color(Theme.Amber.r, Theme.Amber.g, Theme.Amber.b, 0.12f));
             var layout = card.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.padding = new RectOffset(10, 10, 8, 8);
-            layout.spacing = 10;
+            layout.padding = new RectOffset(12, 12, 10, 10);
+            layout.spacing = 12;
             layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = true;
+            layout.childForceExpandHeight = false;   // ← было true
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childAlignment = TextAnchor.MiddleLeft;
 
+            // ---- Icon: fixed square, preserves aspect ----
             var iconGo = new GameObject("Icon", typeof(RectTransform));
             iconGo.transform.SetParent(card, false);
-            iconGo.AddComponent<LayoutElement>().minWidth = 40;
+            var iconLayout = iconGo.AddComponent<LayoutElement>();
+            iconLayout.minWidth = iconLayout.preferredWidth = 56;
+            iconLayout.minHeight = iconLayout.preferredHeight = 56;
+            iconLayout.flexibleWidth = 0;
             var iconImage = iconGo.AddComponent<Image>();
+            iconImage.preserveAspect = true;                    // ← ключевое
+            iconImage.raycastTarget = false;
             var sprite = Theme.TryLoadSprite($"Icons/badge_{def.Id}");
             if (sprite != null)
             {
@@ -953,18 +959,26 @@ namespace Arena.UI
                 iconImage.color = new Color(Theme.Amber.r, Theme.Amber.g, Theme.Amber.b, 0.4f);
             }
 
+            // ---- Text column: name + description, no overflow ----
             var textGo = new GameObject("Text", typeof(RectTransform));
             textGo.transform.SetParent(card, false);
             textGo.AddComponent<LayoutElement>().flexibleWidth = 1;
             var textLayout = textGo.AddComponent<VerticalLayoutGroup>();
+            textLayout.spacing = 2;
             textLayout.childForceExpandWidth = true;
             textLayout.childForceExpandHeight = false;
             textLayout.childControlWidth = true;
             textLayout.childControlHeight = true;
             textLayout.childAlignment = TextAnchor.MiddleLeft;
 
-            Theme.CreateText(textGo.transform, "Name", 16, TextAnchor.UpperLeft, Theme.Amber).text = def.Name;
-            Theme.CreateText(textGo.transform, "Description", 13, TextAnchor.UpperLeft, Theme.Muted).text = def.Description;
+            var nameText = Theme.CreateText(textGo.transform, "Name", 16, TextAnchor.UpperLeft, Theme.Amber);
+            nameText.text = def.Name;
+
+            var descText = Theme.CreateText(textGo.transform, "Description", 13, TextAnchor.UpperLeft, Theme.Muted);
+            descText.text = def.Description;
+            descText.enableAutoSizing = true;
+            descText.fontSizeMin = 11;
+            descText.fontSizeMax = 13;
         }
 
         // Общий подсчёт для BuildStrategyNarrative (Ю6, один прогон) и
@@ -1215,12 +1229,12 @@ namespace Arena.UI
         // задача "углубить разговоры") за один проход может накопиться до 8-10 разных
         // тегов техник — нерастягивающийся HorizontalLayoutGroup вылезал бы за экран,
         // GridLayoutGroup сам переносит лишние чипы на следующую строку.
-        private void AddScoreChipsRow()
+        private void AddScoreChipsRow(Dictionary<string, TechniqueInfo> byId)
         {
             var rowGo = new GameObject("ScoreRow", typeof(RectTransform));
             rowGo.transform.SetParent(endContent, false);
             var grid = rowGo.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(175, 36);
+            grid.cellSize = new Vector2(240, 36);
             grid.spacing = new Vector2(10, 10);
             grid.childAlignment = TextAnchor.MiddleLeft;
             grid.constraint = GridLayoutGroup.Constraint.Flexible;
@@ -1230,11 +1244,26 @@ namespace Arena.UI
             {
                 bool positive = kv.Value > 0;
                 var accent = positive ? Theme.Sage : Theme.Coral;
-                var chipBg = Theme.CreatePanel(rowGo.transform, "Chip", new Color(accent.r, accent.g, accent.b, 0.16f));
-                var chipText = Theme.CreateText(chipBg, "Label", 16, TextAnchor.MiddleCenter, accent);
-                chipText.text = $"{kv.Key} {(positive ? "+" : "")}{kv.Value}";
+                var chipBg = Theme.CreatePanel(rowGo.transform, "Chip",
+                    new Color(accent.r, accent.g, accent.b, 0.16f));
+
+                var chipText = Theme.CreateText(chipBg, "Label", 16, TextAnchor.MiddleLeft, accent);
+                var displayName = byId.TryGetValue(kv.Key, out var info) && !string.IsNullOrEmpty(info.ru_name)
+                    ? info.ru_name
+                    : HumanizeId(kv.Key);
+                chipText.text = $"{displayName}  {(positive ? "+" : "")}{kv.Value}";
                 Theme.StretchFull(chipText.rectTransform);
+                chipText.rectTransform.offsetMin = new Vector2(8, 0);
+                chipText.rectTransform.offsetMax = new Vector2(-8, 0);
             }
+        }
+
+        // objective_criteria -> "Objective criteria" вместо "objective_criteria"
+        private static string HumanizeId(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return id;
+            var withSpaces = id.Replace('_', ' ');
+            return char.ToUpperInvariant(withSpaces[0]) + withSpaces.Substring(1);
         }
 
         private void AddQuoteCard(ChosenStep step, Dictionary<string, TechniqueInfo> byId, bool isStrength)

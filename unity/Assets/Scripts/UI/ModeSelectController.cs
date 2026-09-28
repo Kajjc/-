@@ -34,18 +34,15 @@ namespace Arena.UI
         {
             if (root != null) return;
 
-            root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: true);
+            root = Theme.CreateCanvas(transform, "ModeSelectCanvas", showMenuButton: false);
             Theme.SetCanvasBackground(root, "Backgrounds/title", scrimAlpha: 0.2f);
 
-            // Логотип (Theme.CreateLogo; надпись в нём перекрашена в светлый, иначе на
-            // тёмном меню пропадает) — сверху по центру. Если файла нет — прежняя
-            // текстовая надпись "АРЕНА ПЕРЕГОВОРОВ" на своём месте.
-            var logoRect = Theme.CreateLogo(root, new Vector2(0.25f, 0.665f), new Vector2(0.75f, 0.985f));
+            var logoRect = Theme.CreateLogo(root, new Vector2(0.22f, 0.52f), new Vector2(0.78f, 0.88f));
             float titleMinY, titleMaxY;
             if (logoRect != null)
             {
-                titleMinY = 0.56f;
-                titleMaxY = 0.65f;
+                titleMinY = 0.42f;
+                titleMaxY = 0.52f;
             }
             else
             {
@@ -68,20 +65,19 @@ namespace Arena.UI
             titleRect.offsetMin = Vector2.zero;
             titleRect.offsetMax = Vector2.zero;
 
-            // Три карточки: каждая ~28% ширины, промежутки по 2%.
-            Theme.CreateOptionCard(root, 0.06f, 0.34f, 0.22f, 0.55f,
+            Theme.CreateOptionCard(root, 0.06f, 0.34f, 0.08f, 0.41f,
                 "Тренировка",
                 "Сразу к переговорам — без теста. Сценарий подберётся автоматически.",
                 Theme.Sage,
                 () => onTraining?.Invoke());
 
-            Theme.CreateOptionCard(root, 0.36f, 0.64f, 0.22f, 0.55f,
+            Theme.CreateOptionCard(root, 0.36f, 0.64f, 0.08f, 0.41f,
                 "Тестирование",
                 "18 вопросов, ~2 минуты. Получи рекомендованный сценарий по навыкам.",
                 Theme.Amber,
                 () => onTesting?.Invoke());
 
-            Theme.CreateOptionCard(root, 0.66f, 0.94f, 0.22f, 0.55f,
+            Theme.CreateOptionCard(root, 0.66f, 0.94f, 0.08f, 0.41f,
                 "Настройки администратора",
                 "Уровень навыков и параметры сценария вручную — для тренера.",
                 Theme.Teal,
